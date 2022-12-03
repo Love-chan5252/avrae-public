@@ -1,0 +1,22 @@
+## Just some tools to check whether a number is an integer, is a number at all, or is positive. Just random functions really.
+## Created by Love-chan#5252
+
+def isnumber(inp):
+    try:
+        float(inp)
+        return True
+    except:
+        return False
+
+def isint(inp):
+    try:
+        return int(inp) == float(inp)
+    except:
+        return False
+
+def ispositivenumber(inp):
+    if isnumber(inp):
+        return float(inp) > 0
+    else:
+        False
+        

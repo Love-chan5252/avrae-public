@@ -1,0 +1,179 @@
+{
+    "DefaultSimpleCards":{
+        "Two of Spades":{
+            "name":":two::spades: Two of Spades",
+            "emojidata":"AAAAAAAAA",
+            "fullface":"This is just a third thing to make you sob lmao"
+        },
+        "Three of Spades":{
+            "name":":three::spades: Three of Spades",
+            "another one":"bites the dust biiaaatch",
+            "multilayered crap sack":"so much fucking data"
+        },
+        "Four of Spades":{
+            "name":":four::spades: Four of Spades",
+            "thinggguhhh":"SPONTANEOUS"
+        },
+        "Five of Spades":{
+            "name":":five::spades: Five of Spades"
+        },
+        "Six of Spades":{
+            "name":":six::spades: Six of Spades"
+        },
+        "Seven of Spades":{
+            "name":":seven::spades: Seven of Spades"
+        },
+        "Eight of Spades":{
+            "name":":eight::spades: Eight of Spades"
+        },
+        "Nine of Spades":{
+            "name":":nine::spades: Nine of Spades"
+        },
+        "Ten of Spades":{
+            "name":":keycap_ten::spades: Ten of Spades"
+        },
+        "Jack of Spades":{
+            "name":":regional_indicator_j::spades: Jack of Spades"
+        },
+        "Queen of Spades":{
+            "name":":regional_indicator_q::spades: Queen of Spades"
+        },
+        "King of Spades":{
+            "name":":regional_indicator_k::spades: King of Spades"
+        },
+        "Ace of Spades":{
+            "name":":regional_indicator_a::spades: Ace of Spades"
+        },
+        "Two of Hearts":{
+            "name":":two::hearts: Two of Hearts"
+        },
+        "Three of Hearts":{
+            "name":":three::hearts: Three of Hearts"
+        },
+        "Four of Hearts":{
+            "name":":four::hearts: Four of Hearts"
+        },
+        "Five of Hearts":{
+            "name":":five::hearts: Five of Hearts"
+        },
+        "Six of Hearts":{
+            "name":":six::hearts: Six of Hearts"
+        },
+        "Seven of Hearts":{
+            "name":":seven::hearts: Seven of Hearts"
+        },
+        "Eight of Hearts":{
+            "name":":eight::hearts: Eight of Hearts"
+        },
+        "Nine of Hearts":{
+            "name":":nine::hearts: Nine of Hearts"
+        },
+        "Ten of Hearts":{
+            "name":":keycap_ten::hearts: Ten of Hearts"
+        },
+        "Jack of Hearts":{
+            "name":":regional_indicator_j::hearts: Jack of Hearts"
+        },
+        "Queen of Hearts":{
+            "name":":regional_indicator_q::hearts: Queen of Hearts"
+        },
+        "King of Hearts":{
+            "name":":regional_indicator_k::hearts: King of Hearts"
+        },
+        "Ace of Hearts":{
+            "name":":regional_indicator_a::hearts: Ace of Hearts"
+        },
+        "Two of Clubs":{
+            "name":":two::clubs: Two of Clubs"
+        },
+        "Three of Clubs":{
+            "name":":three::clubs: Three of Clubs"
+        },
+        "Four of Clubs":{
+            "name":":four::clubs: Four of Clubs"
+        },
+        "Five of Clubs":{
+            "name":":five::clubs: Five of Clubs"
+        },
+        "Six of Clubs":{
+            "name":":six::clubs: Six of Clubs"
+        },
+        "Seven of Clubs":{
+            "name":":seven::clubs: Seven of Clubs"
+        },
+        "Eight of Clubs":{
+            "name":":eight::clubs: Eight of Clubs"
+        },
+        "Nine of Clubs":{
+            "name":":nine::clubs: Nine of Clubs"
+        },
+        "Ten of Clubs":{
+            "name":":keycap_ten::clubs: Ten of Clubs"
+        },
+        "Jack of Clubs":{
+            "name":":regional_indicator_j::clubs: Jack of Clubs"
+        },
+        "Queen of Clubs":{
+            "name":":regional_indicator_q::clubs: Queen of Clubs"
+        },
+        "King of Clubs":{
+            "name":":regional_indicator_k::clubs: King of Clubs"
+        },
+        "Ace of Clubs":{
+            "name":":regional_indicator_a::clubs: Ace of Clubs"
+        },
+        "Two of Diamonds":{
+            "name":":two::diamonds: Two of Diamonds"
+        },
+        "Three of Diamonds":{
+            "name":":three::diamonds: Three of Diamonds"
+        },
+        "Four of Diamonds":{
+            "name":":four::diamonds: Four of Diamonds"
+        },
+        "Five of Diamonds":{
+            "name":":five::diamonds: Five of Diamonds"
+        },
+        "Six of Diamonds":{
+            "name":":six::diamonds: Six of Diamonds"
+        },
+        "Seven of Diamonds":{
+            "name":":seven::diamonds: Seven of Diamonds"
+        },
+        "Eight of Diamonds":{
+            "name":":eight::diamonds: Eight of Diamonds"
+        },
+        "Nine of Diamonds":{
+            "name":":nine::diamonds: Nine of Diamonds"
+        },
+        "Ten of Diamonds":{
+            "name":":keycap_ten::diamonds: Ten of Diamonds"
+        },
+        "Jack of Diamonds":{
+            "name":":regional_indicator_j::diamonds: Jack of Diamonds"
+        },
+        "Queen of Diamonds":{
+            "name":":regional_indicator_q::diamonds: Queen of Diamonds"
+        },
+        "King of Diamonds":{
+            "name":":regional_indicator_k::diamonds: King of Diamonds"
+        },
+        "Ace of Diamonds":{
+            "name":":regional_indicator_a::diamonds: Ace of Diamonds"
+        }
+    },
+    "TemplateCustomDeck":{
+        "Card ID Here":{
+            "name":"Card Name Here"
+        },
+        "ID 2 Here":{
+            "name":"Add as many cards as you want"
+        },
+        "No Identical IDs":{
+            "name":"Save custom decks in a gvar like this one!",
+            "magic data":["Magic cards coming soon with !deck play card!",
+                "Cards that do damage! Cards that heal! Cards galore!"
+            ]
+        }
+    }
+}

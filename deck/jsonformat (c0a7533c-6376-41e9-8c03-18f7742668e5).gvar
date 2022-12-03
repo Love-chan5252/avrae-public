@@ -1,0 +1,63 @@
+## There was just no way to get a good formatted print of a json in Avrae, so now, there is! Enjoy!
+## Created by Love-chan#5252
+
+def format_json(json, indentation=2, iterations: int=1):
+    n = '\n'
+    indent = " "*indentation
+    out = """"""
+
+    try:
+        json = load_json(json)
+    except "JSONDecodeError":
+        pass
+
+    ## str procedure
+    if typeof(json)=="str":
+        out += '\"'+json+'\"'
+        return str(out)
+
+    ## True or False procedure
+    if typeof(json)=="bool":
+        if json==True:
+            out += "True"
+        if json==False:
+            out += "False"
+        return str(out)
+
+    ## None procedure
+    if typeof(json)=="NoneType":
+        out += "None"
+        return str(out)
+
+    ## int or float procedure
+    if typeof(json)=="int" or typeof(json)=="float":
+        out += str(json)
+        return str(out)
+
+    ## dict procedure
+    if typeof(json)=="SafeDict":
+        out += "{" + n
+        for subkey, subval in json.items():
+            out += indent*iterations
+            new_iter = iterations + 1
+            out += format_json(subkey, indentation, iterations=new_iter)
+            out += ":"
+            out += format_json(subval, indentation, iterations=new_iter)
+            out += "," + n
+        out = out.strip("," + n)
+        out += n
+        out += indent*(iterations - 1) + "}"
+        return str(out)
+
+    ## List procedure
+    if typeof(json)=="SafeList":
+        out += "[" + n
+        for item in json:
+            out += indent*iterations
+            new_iter = iterations + 1
+            out += format_json(item, indentation, iterations=new_iter)
+            out += "," + n
+        out = out.strip("," + n)
+        out += n
+        out += indent*(iterations - 1) + "]"
+        return str(out)
