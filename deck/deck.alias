@@ -572,23 +572,24 @@ if "init" == args[0] or "i" == args[0]:
 
                 if not (combat_exhaustpile := c.get_metadata(COMBAT_EXHAUSTPILE_NAME)):
                     c.set_metadata(COMBAT_EXHAUSTPILE_NAME, dump_json(exhaustpile))
-                    init_dataset_message += ("*Init exhaustpile set to your current exhaustpile.*"
-                                             + N)
+                    if (character().levels.get("Cardistor")>=1 or len(exhaustpile)>0):
+                        init_dataset_message += ("*Init exhaustpile set to your current exhaustpile.*"
+                                                + N)
                 else:
                     exhaustpile = load_json(combat_exhaustpile)
 
                 c.set_metadata(combat_hand_name, dump_json(cardhand))
                 handlen = len(cardhand)
                 if handlen > 0:
-                    cheatmsg = f" Carried over {handlen} " + ("cards.*" if handlen != 1 else "card.*")
+                    cheatmsg = f" Carried over {handlen} " + ("cards." if handlen != 1 else "card.")
                 else:
-                    cheatmsg = "*"
+                    cheatmsg = ""
                 init_dataset_message += ("*Hand in init set to your current hand."
                                         + cheatmsg
+                                        + "*"
                                         + N)
 
-                if init_dataset_message:
-                    init_dataset_message += N + current_cards_str(drawpile=drawpile, cardhand=cardhand, discardpile=discardpile, exhaustpile=exhaustpile)
+                init_dataset_message += N + current_cards_str(drawpile=drawpile, cardhand=cardhand, discardpile=discardpile, exhaustpile=exhaustpile)
 
                 c.me.add_effect(
                     COMBAT_EFFECT_NAME,
