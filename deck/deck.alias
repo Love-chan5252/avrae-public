@@ -4,7 +4,7 @@ N,ZERO_SPACE,TRIPLE_BACK_TICKS = "\n","\u200c","`"+"`"+"`"
 VARNAME = "custom_decks"
 COMBAT_EFFECT_NAME,COMBAT_DECKLOAD_NAME,COMBAT_DRAWPILE_NAME,COMBAT_DISCARDPILE_NAME,COMBAT_EXHAUSTPILE_NAME = "Playing Cards","init_deckload","shared_drawpile","shared_discardpile","shared_exhaustpile"
 DEFAULT_DECKS = ["f4b75892-9488-413e-88c9-20b8183541c6"]
-FOOTER_STRING = "!deck | v3.1.0 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = "!deck | v1.1.1 | Lovingly made by @""Love-chan#5252"
 
 c = combat()
 combat_hand_name = name + "_COMBATHAND"
@@ -366,7 +366,7 @@ if "hand" == args[0]:
                 )
     handphrase = randchoice(handphrases)
 
-    return f"""embed -title "{name} {handphrase} {their} hand!" -desc "{card_str}" {hand_display_fields} """
+    return f"""embed -title "{name} {handphrase} {their} hand!" -desc "{card_str}" {hand_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 ## """
 ## Use `!deck hand` to check the contents of your hand!
 ## """
