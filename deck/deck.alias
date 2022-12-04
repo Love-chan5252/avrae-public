@@ -14,7 +14,10 @@ deckvars = [] + DEFAULT_DECKS
 
 using(
     json="c0a7533c-6376-41e9-8c03-18f7742668e5",
-    numbertool="8f4557ba-39bc-4408-be36-d3c68b6544cf"
+    numbertool="8f4557ba-39bc-4408-be36-d3c68b6544cf",
+
+    ## Pronouns module by Lathaon#6649
+    pronouns="2c4012a3-accd-4fcf-a5e2-30bb51800c4e"
     )
 
 character().set_cvar_nx("deck_settings", dump_yaml({"auto_shuffle":False}))
@@ -28,6 +31,14 @@ if c:
         if c.me.get_effect(COMBAT_EFFECT_NAME):
             use_shared_deck = True
             ## If not all of them are true, use_shared_deck stays False.
+
+if use_shared_deck:
+    possessive = "the"
+else:
+    possessive = pronouns.their()    
+
+their = pronouns.their()
+they = pronouns.they()
 
 def set_deckload(new_deckload):
     if not use_shared_deck:
@@ -325,7 +336,7 @@ if "draw" == args[0]:
 
     drawn_display_fields = fieldsplit(get_card_display_names(drawn), fieldhead="**Drawn Cards:**")
     
-    return f"""embed -title "{name} draws {cards_drawn} {"card" if cards_drawn==1 else "cards"} from their draw pile and adds {"it" if cards_drawn==1 else "them"} to their hand!" -desc "*Drawn from {deckload["deckname"]}.*{N + N + card_str}" {drawn_display_fields} {cardhand_display_fields} {draw_err} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+    return f"""embed -title "{name} draws {cards_drawn} {"card" if cards_drawn==1 else "cards"} from {possessive} draw pile and adds {"it" if cards_drawn==1 else "them"} to {their} hand!" -desc "*Drawn from {deckload["deckname"]}.*{N + N + card_str}" {drawn_display_fields} {cardhand_display_fields} {draw_err} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 ## """
 ## Use `!deck draw` to draw 1 card, or `!deck draw [#]` to draw # amount of cards!
 ## """
@@ -336,23 +347,26 @@ if "hand" == args[0]:
 
     hand_display_fields = fieldsplit(get_card_display_names(cardhand), fieldhead="Cards In Hand:")
 
-    handphrases = ["checks", "takes a peek at", "browses", "sifts through", "couldn't memorize",
-                    "bleeds", "cheats at", "remembers they can look at", "needs a card from", "can't believe",
+
+    handphrases = load_json(
+                    f"""["checks", "takes a peek at", "browses", "sifts through", "couldn't memorize",
+                    "shows the table", "cheats at", "remembers {they} can look at", "needs a card from", "can't believe",
                     "forgor", "forgot", "is tempted to savescum", "deliberates", "reconsiders",
-                    "wants to pull their hair out over", "considers bluffing with", "scries", "indexes",
+                    "wants to pull {their} hair out over", "considers bluffing with", "scries", "indexes",
                     "processes", "comes to terms with", "makes enemies with", "wants to bet on",
                     "might lose everything with", "makes goo-goo eyes at", "isn't too proud of",
-                    "feasts their eyes on", "generates endless synonyms with", "swears at",
+                    "feasts {their} eyes on", "generates endless synonyms with", "swears at",
                     "FINALLY realizes that the title of this embed is as random as the minecraft loading screen with",
                     "rolled a nat 20 with", "rolled a nat 1 with", "might have a good", "messes with",
-                    "fidgets with", "worries over", "reads fine literature with", "is bleeding their",
-                    "wants to DM Love-chan#5252 with a suggestion for the text that appears when they check their",
+                    "fidgets with", "worries over", "reads fine literature with", "is bleeding",
+                    "wants to DM Love-chan#5252 with a suggestion for the text that appears when {they} {pronouns.verb('checks', 'check')}",
                     "verbs", "[adjective] [verb]'s", "has a sudden compulsion to eat", "wants to throw out",
                     "can't tell the difference between garbage and", "sobs at floor 1 jaw worm with",
-                    "is praying to snecko as they sob at", "husks at", "<:husk:994063369655042069>'s at"]
-    handphrase = handphrases[randint(len(handphrases))]
+                    "is praying to snecko as {they} {pronouns.verb('sobs', 'sob')} at", "husks at", "<:husk:994063369655042069>'s at"]"""
+                )
+    handphrase = randchoice(handphrases)
 
-    return f"""embed -title "{name} {handphrase} their hand!" -desc "{card_str}" {hand_display_fields} """
+    return f"""embed -title "{name} {handphrase} {their} hand!" -desc "{card_str}" {hand_display_fields} """
 ## """
 ## Use `!deck hand` to check the contents of your hand!
 ## """
@@ -427,7 +441,7 @@ if "reset" == args[0]:
     
     card_str = current_cards_str()
 
-    return f"""embed -title "{name} resets their cards!" -desc "*Draw pile reset to `{deckload["deckname"]}`.*{N+N+card_str+N+N+shuffle_msg}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+    return f"""embed -title "{name} resets {possessive} cards!" -desc "*Draw pile reset to `{deckload["deckname"]}`.*{N+N+card_str+N+N+shuffle_msg}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 ## """
 ## Use `!deck reset` to completely reset your drawpile to the currently selected deck. In shared card initiative, everyone must discard their cards first, or else it's called cheating!
 ## {N}Automatic shuffling on reset: `{autoshuffle_on_reset}`
@@ -438,7 +452,7 @@ def reshuffle():
     set_drawpile(shuffled)
     set_discardpile([])
     card_str = current_cards_str(drawpile=shuffled, discardpile = [])
-    return f"""embed -title "{name} shuffles their discard pile into their draw pile!" -desc "*Discard pile shuffled into draw pile.*{N+card_str}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """ 
+    return f"""embed -title "{name} shuffles {possessive} discard pile into {possessive} draw pile!" -desc "*Discard pile shuffled into draw pile.*{N+card_str}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """ 
 
 if "reshuffle" == args[0]:
     return reshuffle()
@@ -450,7 +464,7 @@ if "shuffle" == args[0]:
     shuffled = shuffle(cards=drawpile)
     drawpile = shuffled
     set_drawpile(shuffled)
-    return f"""embed -title "{name} shuffles their draw pile!" -desc "*Drawpile shuffled still containing previous cards.*{N+N}Use `!deck reset` to completely reset your cards.{N+N}Use `!deck shuffle discard` or `!deck reshuffle` to shuffle your discard pile into your draw pile.{N+N+current_cards_str()}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+    return f"""embed -title "{name} shuffles {possessive} draw pile!" -desc "*Drawpile shuffled still containing previous cards.*{N+N}Use `!deck reset` to completely reset your cards.{N+N}Use `!deck shuffle discard` or `!deck reshuffle` to shuffle your discard pile into your draw pile.{N+N+current_cards_str()}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 ## """
 ## Use `!deck shuffle` to shuffle your draw pile.
 ## {N+N}
@@ -501,7 +515,7 @@ if "select" == args[0] or "load" == args[0]:
             else:
                 personal_or_shared_deckload = '**Cvar \\"deckload\\" Set To:**'
                 personal_or_shared_deckpreview = "**Sample of New Shared Deck:**"
-                personal_or_shared_title = f"{name} sets {userselection['deckname']} as their active deck!"
+                personal_or_shared_title = f"{name} sets {userselection['deckname']} as {their} active deck!"
 
             deckloadpreview = (personal_or_shared_deckload
                                 + TRIPLE_BACK_TICKS
