@@ -4,7 +4,7 @@ N,ZERO_SPACE,TRIPLE_BACK_TICKS = "\n","\u200c","`"+"`"+"`"
 VARNAME = "custom_decks"
 COMBAT_EFFECT_NAME,COMBAT_DECKLOAD_NAME,COMBAT_DRAWPILE_NAME,COMBAT_DISCARDPILE_NAME,COMBAT_EXHAUSTPILE_NAME = "Playing Cards","init_deckload","shared_drawpile","shared_discardpile","shared_exhaustpile"
 DEFAULT_DECKS = ["f4b75892-9488-413e-88c9-20b8183541c6"]
-FOOTER_STRING = "!deck | v1.1.1 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = "!deck | v1.1.2 | Lovingly made by @""Love-chan#5252"
 
 c = combat()
 combat_hand_name = name + "_COMBATHAND"
@@ -300,7 +300,7 @@ def help_embed():
 
 ## THIS IS THE HELP EMBED. IT COMES BEFORE ALL OF THE OTHER EMBEDS BECAUSE THEY CHECK FOR args[0]
 ## AND IT WILL ERROR IF IT TRIES TO CHECK THAT AND THERE ARE NO ARGS.
-if not args or "help" in args:
+if not args or "help" in args[:1]:
     return help_embed()
 
 if "draw" == args[0]:
@@ -374,32 +374,34 @@ if "hand" == args[0]:
 if "discard" == args[0]:
     if len(args) >= 2:
         ## Discards only the specified cards if specified cards are provided.
-        ## Function also sets the hand post-discarding.
+        ## Also sets the hand post-discarding.
 
-        ## GETS THE CARDS' KEYS FROM THEIR DISPLAY NAMES
-        ## BECAUSE THE USER CANNOT SEE THE KEYS/IDS.
-        ## DON'T TOUCH THIS.
-        ## DON'T TOUCH THIS.
-        key_tuples = [(deckLoaded[i]["name"], i) for i in deckLoaded]  #DON'T TOUCH THIS.
-        valid_card_keys = []  #DON'T TOUCH THIS.
-        for user_substring in args[1:]:  #DON'T TOUCH THIS.
-            temp_candidate_keys = []  #DON'T TOUCH THIS.
-            for display_name, card_key in key_tuples:  #DON'T TOUCH THIS.
-                if user_substring.lower() in display_name.lower():  #DON'T TOUCH THIS.
-                    temp_candidate_keys.append(card_key)  #DON'T TOUCH THIS.
-            nondupe_keys = []  #DON'T TOUCH THIS.
-            for i in temp_candidate_keys:  #DON'T TOUCH THIS.
-                if (i in cardhand) and (not (str(i) in valid_card_keys)):  #DON'T TOUCH THIS.
-                    nondupe_keys.append(i)  #DON'T TOUCH THIS.
-            if nondupe_keys:  #DON'T TOUCH THIS.
-                valid_card_keys.append(nondupe_keys[0])  #DON'T TOUCH THIS.
-        ## DON'T TOUCH THIS.
-        ## DON'T TOUCH THIS.
+        ## Makes tuples of the card's display names and their keys in deckLoaded
+        key_tuples = [(subdict["name"], key) for key, subdict in deckLoaded.items()]
+        
+        valid_card_keys = []
+        
+        ## Iterates over each user input after `!deck discard`
+        for user_substring in args[1:]:
+            user_matching_keys = []
+
+            ## Iterates over each card display name to get the right keys so 
+            ## the correct cards can be discarded by discard()
+            for display_name, card_key in key_tuples:
+                if user_substring.lower() in display_name.lower():
+                    user_matching_keys.append(card_key)
+
+            ## Makes sure that no duplicate keys are stored or used.
+            for i in user_matching_keys:
+                if i in cardhand and not i in valid_card_keys:
+                    valid_card_keys.append(i)
+                    break
 
         discarded = discard(valid_card_keys) 
 
         ## Gets the names of the discarded cards and italicizes them for display.
         discarded = ["*" + i + "*" for i in get_card_display_names(discarded)]
+
         ## Turns the fetched, italicized names into fields for the output.
         discard_display_fields = fieldsplit(discarded, fieldhead="**Discarded Cards:**")
 
@@ -416,7 +418,7 @@ if "discard" == args[0]:
         discardpile = (discarded + discardpile)
         discarded = ["*" + i + "*" for i in get_card_display_names(discarded)]
         discard_display_fields = fieldsplit(discarded, fieldhead="**Discarded Cards:**")
-        return f"""embed -title "{name} discards thier hand!" -desc "*Hand placed on top of discard pile.*{N+N+current_cards_str()}" {discard_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+        return f"""embed -title "{name} discards {their} hand!" -desc "*Hand placed on top of discard pile.*{N+N+current_cards_str()}" {discard_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 ## """
 ## Use `!deck discard` to move all of the cards from your hand to your discard pile!
 ## {N+N}
