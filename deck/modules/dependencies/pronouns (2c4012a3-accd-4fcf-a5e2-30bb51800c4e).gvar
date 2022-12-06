@@ -1,0 +1,208 @@
+# pronouns = '2c4012a3-accd-4fcf-a5e2-30bb51800c4e'
+#
+# A module to help construct text using the character's pronouns. Allows for
+# multiple possibilities for those with more than one of each kind.
+#
+# As backwards-compatible as it can be.
+#
+# ===== Functions =====
+#
+# they(default="they"): Returns a subject pronoun (he/she/they).
+# They(default="They"): Capitalized version of the above.
+#
+# them(default="them"): Returns an object pronoun (her/him/them).
+# Them(default="Them"): Capitalized version of the above.
+#
+# their(default="their"): Returns a possessive determiner (their/her/his).
+# Their(default="Their"): Capitalized version of the above.
+#
+# theirs(default="theirs"): Returns an independent possessive pronoun
+#     (his/theirs/hers).
+# Theirs(default="Theirs"): Capitalized version of the above.
+#
+# gendered(default="gender-neutral"): Returns an adjective describing the pronouns
+#     (female, gender-neutral, male).
+# Gendered(default="Gender-neutral"): Capitalized version of the above.
+#
+# verb(singular, plural): Returns the plural text if the last pronoun returned was
+#     "they" or a user-defined equivalent, or the singular text otherwise.
+#
+# summary(): Returns pronouns to put in brackets after a character's name.
+# 
+# ===== Notes =====
+#
+# A character's pronouns are stored in the following cvars:
+# - they:              a subject pronoun
+# - them:              an object pronoun
+# - their:             a possessive determiner
+# - theirs:            an independent possessive pronoun
+# - ungendered:        an adjective describing the pronouns (e.g. "male")
+# - pronouns_summary:  something to put in the brackets (e.g. "she/they")
+# - plural_pronouns:   a YAML list of any user-defined plural pronouns (like "they")
+#
+# A character with multiple possible pronouns should separate them with a forward slash.
+# Example: !cvar they he/they
+# This would cause they() to randomly return "he" or "they" each time.
+
+_pc = character()
+
+_pronouns = {
+    pronoun: _pc.get_cvar(pronoun).split('/')
+    for pronoun in ('they', 'them', 'their', 'theirs')
+    if pronoun in _pc.cvars
+}
+if 'ungendered' in _pc.cvars:
+    _pronouns["gendered"] = _pc.get_cvar('ungendered')
+
+# Had to make it a list because for some reason it didn't work as a bool.
+_was_plural = [False]
+
+_plural_pronouns = ["they"] + load_yaml(_pc.get_cvar("plural_pronouns", "[]"))
+
+def _capitalize(txt):
+    return txt[:1].upper() + txt[1:]
+
+def they(default = "they"):
+    """
+    Returns a subject pronoun (he/she/they) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `they` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "they"
+    :return: a subject pronoun.
+    :rtype: str
+    """
+    if "they" in _pronouns:
+        out = randchoice(_pronouns.they)
+    else:
+        out = default
+    _was_plural[0] = out in _plural_pronouns
+    return out
+
+def They(default = "They"):
+    """
+    Returns a capitalized subject pronoun (He/She/They) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `they` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "They"
+    :return: a capitalized subject pronoun.
+    :rtype: str
+    """
+    return _capitalize(they(default))
+
+def them(default = "them"):
+    """
+    Returns an object pronoun (her/him/them) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `them` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "them"
+    :return: an object pronoun.
+    :rtype: str
+    """
+    if "them" in _pronouns:
+        out = randchoice(_pronouns.them)
+    else:
+        out = default
+    return out
+
+def Them(default = "Them"):
+    """
+    Returns a capitalized object pronoun (Her/Him/Them) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `them` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "Them"
+    :return: a capitalized object pronoun.
+    :rtype: str
+    """
+    return _capitalize(them(default))
+
+def their(default = "their"):
+    """
+    Returns a possessive determiner (her/his/their) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `their` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "their"
+    :return: a possessive determiner.
+    :rtype: str
+    """
+    if "their" in _pronouns:
+        out = randchoice(_pronouns.their)
+    else:
+        out = default
+    return out
+
+def Their(default = "Their"):
+    """
+    Returns a possessive determiner (Her/His/Their) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `their` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "Their"
+    :return: a capitalized possessive determiner.
+    :rtype: str
+    """
+    return _capitalize(their(default))
+
+def theirs(default = "theirs"):
+    """
+    Returns an independent possessive pronoun (hers/his/theirs) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `theirs` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "theirs"
+    :return: an independent possessive pronoun.
+    :rtype: str
+    """
+    if "theirs" in _pronouns:
+        out = randchoice(_pronouns.theirs)
+    else:
+        out = default
+    return out
+
+def Theirs(default = "Theirs"):
+    """
+    Returns a capitalized independent possessive pronoun (Hers/His/Theirs) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `theirs` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "Theirs"
+    :return: a capitalized independent possessive pronoun.
+    :rtype: str
+    """
+    return _capitalize(theirs(default))
+
+def gendered(default = "gender-neutral"):
+    """
+    Returns an adjective describing the pronouns (female, male, gender-neutral) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `gendered` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "gender-neutral"
+    :return: an adjective describing the character's pronouns.
+    :rtype: str
+    """
+    return _pronouns.get("gendered", default)
+
+def Gendered(default = "Gender-neutral"):
+    """
+    Returns an adjective describing the pronouns (Female, Male, Gender-neutral) for the active character.
+    This is randomly chosen from the `/`-separated pronouns in the `gendered` cvar.
+    :arg str default: the default, if the active character has no pronoun settings. default: "Gender-neutral"
+    :return: an adjective describing the character's pronouns.
+    :rtype: str
+    """
+    return _capitalize(gendered(default))
+
+def verb(singular, plural):
+    """
+    Returns the plural text if the most recent pronoun returned by `they()` was "they", or the singular text otherwise.
+    The user can also define custom plural pronouns with the `plural_pronouns` cvar/uvar, which should be a YAML list.
+    :arg str singular: the string to return for a singular pronoun.
+    :arg str plural: the string to return for a plural pronoun.
+    :return: the appropriate input string.
+    :rtype: str
+    """
+    return plural if _was_plural[0] else singular
+
+def summary():
+    """
+    Tries to find at least two different pronouns to put in brackets after the character's name.
+    Can be overridden with the pronouns_summary cvar.
+    :return: pronouns to put in brackets after the character's name.
+    :rtype: str
+    """
+    if "pronouns_summary" in _pc.cvars:
+        return _pc.get_cvar("pronouns_summary")
+    
+    out = {}
+    for cvar in ("they", "them", "their", "theirs"):
+        out |= dict.fromkeys(_pronouns.get(cvar, [cvar]))
+        if len(out) > 1:
+            break
+    return "/".join(out.keys())
