@@ -1,18 +1,15 @@
 {
     "DefaultSimpleCards":{
         "Two of Spades":{
-            "name":":two::spades: Two of Spades",
-            "emojidata":"AAAAAAAAA",
-            "fullface":"This is just a third thing to make you sob lmao"
+            "name":":two::spades: Two of Spades"
+            "apology":"The JSON-formatter test strings that I was using were still here in the published version. I forgor. I'm sorry.",
+            "note":"(note and apology statement will be removed next patch.)"
         },
         "Three of Spades":{
-            "name":":three::spades: Three of Spades",
-            "another one":"bites the dust biiaaatch",
-            "multilayered crap sack":"so much fucking data"
+            "name":":three::spades: Three of Spades"
         },
         "Four of Spades":{
-            "name":":four::spades: Four of Spades",
-            "thinggguhhh":"SPONTANEOUS"
+            "name":":four::spades: Four of Spades"
         },
         "Five of Spades":{
             "name":":five::spades: Five of Spades"
