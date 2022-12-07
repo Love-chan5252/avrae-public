@@ -1,1 +1,37 @@
-# Thanks for using decklib!
+# decklib = "7a689cb6-4591-4aeb-8e5a-d56c9b5c002b"
+# 
+# A module to help handle the various card-storing variables used by
+#     the !deck alias. You should include this module in code run by custom
+#     cards, epitomally if they deal with discarding or drawing more cards.
+# 
+# This module is intended to do all of the handling for the !deck alias.
+#     Let's hope it actually gets there.
+#
+# ===== IMPORTANT =====
+# 
+# These functions are intended to keep your card piles intact. Without them,
+#     it's going to be very inconvenient to stop cards from duplicating, disappearing,
+#     saving incorrectly, and not showing up in the summary in almost every embed. (That's 
+#     the one that says *XX cards remaining in draw pile* and *X cards in hand*)
+#
+# ===== CVARS =====
+# 
+# A character playing with !deck has three main card piles, each of which has a cvar:
+# - drawpile:     Where cards are drawn from.
+# - cardhand:     Where drawn cards are kept.
+# - discardpile:  Where cards are put when discarded from the hand.
+#
+# A character also has two more cvars, more secretive than the last:
+# - exhaustpile:  Where cards go to die. Think of it like setting a card on FIRE
+#                     so you can't shuffle it back into your drawpile anymore. Only 
+#                     a !deck reset can bring these cards back.
+# - deckload:     a YAML dictionary of information used to access which deck the
+#                     current character is actually using.
+#
+# Of all of these, deckload is arguably the most important. Without it, the
+#     deck cannot be reset.
+
+_char = character()
+
+
+

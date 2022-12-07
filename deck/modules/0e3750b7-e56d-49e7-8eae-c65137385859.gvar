@@ -1,0 +1,7 @@
+# Using this to test how variables interact with code inside of modules.
+# it's going very, very well. /non-sarcastic
+
+drawpile = []
+
+def mod_draw(inp):
+    inp.append("Look, ma! An item!")

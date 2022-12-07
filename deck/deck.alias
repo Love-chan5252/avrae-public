@@ -13,6 +13,7 @@ character_pic = image
 deckvars = [] + DEFAULT_DECKS
 
 using(
+    decklib = "7a689cb6-4591-4aeb-8e5a-d56c9b5c002b",
     json="c0a7533c-6376-41e9-8c03-18f7742668e5",
     numbertool="8f4557ba-39bc-4408-be36-d3c68b6544cf",
 
