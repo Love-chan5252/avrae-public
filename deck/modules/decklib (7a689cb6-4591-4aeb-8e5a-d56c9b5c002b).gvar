@@ -33,5 +33,28 @@
 
 _char = character()
 
+def set_list(list_: list, new_value: list) -> list:
+    """
+    Sets a list variable from within a function by TRANSFORMING it.
+    Important to use because trying to set drawpile/cardhand/discardpile
+    /exhaustpile using an = operator copies the variable instead of preserving
+    the pointer or fails to work outside the function. 
+    :arg list list_: the list to transform
+    :arg list new_value: the new content of the list used in arg list_
+    :return: the new list, with the same pointer.
+    :rtype: list
+    """
+
+    # Removes all items of the original list.
+    for i in range(len(list_)):
+        list_.pop(0)
+    
+    # Adds all the items from new_value into the original list.
+    for i in new_value:
+        list_.append(i)
+    
+    return list_
+
+
 
 
