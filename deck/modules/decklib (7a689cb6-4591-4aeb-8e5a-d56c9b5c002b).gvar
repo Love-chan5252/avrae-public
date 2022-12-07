@@ -31,30 +31,129 @@
 # Of all of these, deckload is arguably the most important. Without it, the
 #     deck cannot be reset.
 
-_char = character()
+# -----------------
+# |   CONSTANTS   |
+# -----------------
 
-def set_list(list_: list, new_value: list) -> list:
+COMBAT_EFFECT_NAME = "Playing Cards"
+COMBAT_DECKLOAD_NAME = "init_deckload"
+COMBAT_DRAWPILE_NAME = "shared_drawpile"
+COMBAT_DISCARDPILE_NAME = "shared_discardpile"
+COMBAT_EXHAUSTPILE_NAME = "shared_drawpile"
+
+# ---------------------------
+# |   IMPORTANT VARIABLES   |
+# ---------------------------
+
+_char = character()
+_current_combat = combat()
+
+# The shared drawpile name used when use_shared_deck is True.
+combat_hand_name = _char.name + "_COMBATHAND" 
+
+# Sets the default for use_shared_deck.
+use_shared_deck = False
+
+# Sets the bool use_shared_deck to True if the current character has used
+# "!deck init join" to share cards in combat. 
+if _current_combat:
+    if _current_combat.me:
+        if _current_combat.me.get_effect(COMBAT_EFFECT_NAME):
+            use_shared_deck = True
+
+# -----------------
+# |   FUNCTIONS   |
+# -----------------
+
+# ===== UTILITY FUNCTIONS =====
+
+def set_list(list_: list, new_contents: list) -> list:
     """
     Sets a list variable from within a function by TRANSFORMING it.
     Important to use because trying to set drawpile/cardhand/discardpile
     /exhaustpile using an = operator copies the variable instead of preserving
     the pointer or fails to work outside the function. 
     :arg list list_: the list to transform
-    :arg list new_value: the new content of the list used in arg list_
+    :arg list new_contents: the new content of the list used in arg list_
     :return: the new list, with the same pointer.
     :rtype: list
     """
 
     # Removes all items of the original list.
-    for i in range(len(list_)):
-        list_.pop(0)
+    list_.clear()
     
-    # Adds all the items from new_value into the original list.
-    for i in new_value:
-        list_.append(i)
+    # Adds all the items from new_contents into the original list.
+    list_.extend(new_contents)
     
     return list_
 
+# ===== DECK DATA STORING =====
 
+def set_deckload(new_deckload: list):
+    """
+    Saves new_deckload in the right place to be accessed when running commands later.
+    :arg list new_deckload: the new list to put into the deckload cvar or combat metadata values
+    :var bool use_shared_deck: determines whether to save new_deckload to the cvar or combat metadata
+    """
 
+    # Saves new_deckload to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    if not use_shared_deck:
+        _char.set_cvar("deckload",dump_yaml(new_deckload))
+    else:
+        _current_combat.set_metadata(COMBAT_DECKLOAD_NAME, dump_yaml(new_deckload))
 
+def set_drawpile(new_drawpile: list):
+    """
+    Saves new_drawpile in the right place to be accessed when running commands later.
+    :arg list new_drawpile: the new list to put into the drawpile cvar or combat metadata values
+    :var bool use_shared_deck: determines whether to save new_drawpile to the cvar or combat metadata
+    """
+
+    # Saves new_drawpile to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    if not use_shared_deck:
+        _char.set_cvar("drawpile", dump_json(new_drawpile))
+    else:
+        _current_combat.set_metadata(COMBAT_DRAWPILE_NAME, dump_json(new_drawpile))
+
+def set_cardhand(new_hand: list):
+    """
+    Saves new_hand in the right place to be accessed when running commands later.
+    :arg list new_hand: the new list to put into the cardhand cvar or combat metadata values
+    :var bool use_shared_deck: determines whether to save new_hand to the cvar or combat metadata
+    """
+
+    # Saves new_hand to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    if not use_shared_deck:
+        _char.set_cvar("cardhand", dump_json(new_hand))
+    else:
+        _current_combat.set_metadata(combat_hand_name, dump_json(new_hand))
+
+def set_discardpile(new_discardpile: list):
+    """
+    Saves new_discardpile in the right place to be accessed when running commands later.
+    :arg list new_discardpile: the new list to put into the discardpile cvar or combat metadata values
+    :var bool use_shared_deck: determines whether to save new_discardpile to the cvar or combat metadata
+    """
+
+    # Saves new_discardpile to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    if not use_shared_deck:
+        _char.set_cvar("discardpile", dump_json(new_discardpile))
+    else:
+        _current_combat.set_metadata(COMBAT_DISCARDPILE_NAME, dump_json(new_discardpile))
+
+def set_exhaustpile(new_exhaustpile):
+    """
+    Saves new_exhaustpile in the right place to be accessed when running commands later.
+    :arg list new_exhaustpile: the new list to put into the exhaustpile cvar or combat metadata values
+    :var bool use_shared_deck: determines whether to save new_exhaustpile to the cvar or combat metadata
+    """
+
+    # Saves new_exhaustpile to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    if not use_shared_deck:
+        _char.set_cvar("exhaustpile", dump_json(new_exhaustpile))
+    else:
+        _current_combat.set_metadata(COMBAT_EXHAUSTPILE_NAME, dump_json(new_exhaustpile))
+
+# ===== DECK MANIPULATION =====
+
+EHE 
