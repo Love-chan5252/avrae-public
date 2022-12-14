@@ -40,6 +40,7 @@ COMBAT_DECKLOAD_NAME = "init_deckload"
 COMBAT_DRAWPILE_NAME = "shared_drawpile"
 COMBAT_DISCARDPILE_NAME = "shared_discardpile"
 COMBAT_EXHAUSTPILE_NAME = "shared_drawpile"
+DEFAULT_DECKS = ["f4b75892-9488-413e-88c9-20b8183541c6"]
 
 # ---------------------------
 # |   IMPORTANT VARIABLES   |
@@ -51,15 +52,108 @@ _current_combat = combat()
 # The shared drawpile name used when use_shared_deck is True.
 combat_hand_name = _char.name + "_COMBATHAND" 
 
-# Sets the default for use_shared_deck.
-use_shared_deck = False
+# Sets the bool :use_shared_deck: to True if the current character has used
+# "!deck init join" to share cards in combat. Is False otherwise.
+try:
+    use_shared_deck = bool(
+        _current_combat.me.get_effect(COMBAT_EFFECT_NAME)
+    )
+else:
+    use_shared_deck = False
 
-# Sets the bool use_shared_deck to True if the current character has used
-# "!deck init join" to share cards in combat. 
-if _current_combat:
-    if _current_combat.me:
-        if _current_combat.me.get_effect(COMBAT_EFFECT_NAME):
-            use_shared_deck = True
+# If not sharing cards in init, gets :deckload: from the char's personal settings.
+if not use_shared_deck:
+    
+    # If deckload cvar is saved, use it to get :deckload:.
+    if _char.get_cvar("deckload"):
+        # Uses the cvar to get the saved deck info.
+        deckload = load_yaml(_char.get_cvar("deckload"))
+
+    # If no deckload cvar exists, creates :deckload: using the first option in
+    # :DEFAULT_DECKS:, then saves it.
+    else:
+        deckload = {
+            "deckname": (
+                load_json(
+                    get_gvar(DEFAULT_DECKS[0])
+                ).keys()
+            )[0],
+            "gvar": DEFAULT_DECKS[0]
+        }
+        set_deckload(deckload)
+
+# Gets :deckload: from the shared initiative settings.
+else:
+    deckload = load_yaml(_current_combat.get_metadata(COMBAT_DECKLOAD_NAME))
+
+# Uses :deckload: to load the deck. :deckLoaded: is basically all of the card information.
+deckLoaded = (
+    load_json(
+        get_gvar(deckload["gvar"])
+    )
+)[deckload["deckname"]]
+
+# Loads :drawpile:, :cardhand:, :discardpile:, and :exhaustpile: according to the char's personal settings.
+if not use_shared_deck:
+
+    drawpile = load_json(
+        _char.get_cvar(
+            "drawpile",
+            dump_json(fresh_deck())  # The default returned if no drawpile cvar exists.
+        )
+    )
+
+    cardhand = load_json(
+        _char.get_cvar(
+            "cardhand",
+            dump_json([])  # The default returned if no cardhand cvar exists.
+        )
+    )
+
+    discardpile = load_json(
+        _char.get_cvar(
+            "discardpile",
+            dump_json([])  # The default returned if no discardpile cvar exists.
+        )
+    )
+
+    exhaustpile = load_json(
+        _char.get_cvar(
+            "exhaustpile",
+            dump_json([])  # The default returned if no exhaustpile cvar exists.
+        )
+    )
+
+# Loads :drawpile:, :cardhand:, :discardpile:, and :exhaustpile: from shared combat settings.
+else:
+
+    drawpile = load_json(
+        _current_combat.get_metadata(
+            COMBAT_DRAWPILE_NAME,
+            dump_json([])  # The default returned if no metadata exists.
+        )
+    )
+
+    cardhand = load_json(
+        _current_combat.get_metadata(
+            combat_hand_name,
+            dump_json([])  # The default returned if no metadata exists.
+        )
+    )
+
+    discardpile = load_json(
+        _current_combat.get_metadata(
+            COMBAT_DISCARDPILE_NAME,
+            dump_json([])  # The default returned if no metadata exists.
+        )
+    )
+
+    exhaustpile = load_json(
+        _current_combat.get_metadata(
+            COMBAT_EXHAUSTPILE_NAME,
+            dump_json([])  # The default returned if no metadata exists.
+        )
+    )
 
 # -----------------
 # |   FUNCTIONS   |
@@ -79,22 +173,55 @@ def set_list(list_: list, new_contents: list) -> list:
     # Removes all items of the original list.
     list_.clear()
     
-    # Adds all the items from new_contents into the original list.
+    # Adds all the items from :new_contents: into the original list.
     list_.extend(new_contents)
     
     return list_
+
+def match(match_from: list, inputs: list):
+    """
+    Fetches the keys of cards in a list from inputs matching their display names.
+    Gets up to 1 non-duplicate key for each input.
+    :arg list match_from: The list to grab the keys from, I.E. cardhand or discardpile.
+    :arg list inputs: A list of strings to match against the card display names.
+    :var dict deckLoaded: All of the card information of the deck being used.
+    :return: The list of matching card keys.
+    """
+
+    # Assembles a list of tuples containing the card IDs and display names to compare the inputs to.
+    key_tuples = [(subdict["name"], card_ID) for card_ID, subdict in deckLoaded.items()]
+
+    out = []
+
+    # Iterates over each string in :inputs:
+    for substring in inputs:
+        user_matching_keys = []
+
+        # Iterates over each card display name to get each matching key.
+        for display_name, card_key in key_tuples:
+            if substring.lower() in display_name.lower():
+                user_matching_keys.append(card_key)
+
+        # Iterates over each matching key to make sure they're valid,
+        # that they're not a duplicate, and takes only the first one.
+        for i in user_matching_keys:
+            if i in match_from and not i in out:
+                out.append(i)
+                break
+
+    return out
 
 # ===== DECK DATA STORING =====
 
 def set_deckload(new_deckload: list):
     """
-    Saves new_deckload in the __ cvar or in the init metadata if the char has done !deck init join
+    Saves :new_deckload: in the __ cvar or in the init metadata if the char has done !deck init join.
     WARNING: You usually do not want to modify the deckload cvar. An invalid deckload is the easiest way to break the alias.
-    :arg list new_deckload: The new list to put into the deckload
-    :var bool use_shared_deck: Determines where to save new_deckload
+    :arg list new_deckload: The new list to put into the deckload.
+    :var bool use_shared_deck: Determines where to save :new_deckload:.
     """
 
-    # Saves new_deckload to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    # Saves :new_deckload: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
     if not use_shared_deck:
         _char.set_cvar("deckload",dump_yaml(new_deckload))
     else:
@@ -102,12 +229,12 @@ def set_deckload(new_deckload: list):
 
 def set_drawpile(new_drawpile: list):
     """
-    Saves new_drawpile in the drawpile cvar or in the init metadata if the char has done !deck init join
+    Saves :new_drawpile: in the drawpile cvar or in the init metadata if the char has done !deck init join
     :arg list new_drawpile: The new list to put into the drawpile 
-    :var bool use_shared_deck: Determines where to save new_drawpile
+    :var bool use_shared_deck: Determines where to save :new_drawpile:
     """
 
-    # Saves new_drawpile to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    # Saves :new_drawpile: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
     if not use_shared_deck:
         _char.set_cvar("drawpile", dump_json(new_drawpile))
     else:
@@ -115,12 +242,12 @@ def set_drawpile(new_drawpile: list):
 
 def set_cardhand(new_hand: list):
     """
-    Saves new_hand in the cardhand cvar or in the init metadata if the char has done !deck init join
+    Saves :new_hand: in the cardhand cvar or in the init metadata if the char has done !deck init join
     :arg list new_hand: The new list to put into the cardhand 
-    :var bool use_shared_deck: Determines where to save new_hand
+    :var bool use_shared_deck: Determines where to save :new_hand:
     """
 
-    # Saves new_hand to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    # Saves :new_hand: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
     if not use_shared_deck:
         _char.set_cvar("cardhand", dump_json(new_hand))
     else:
@@ -128,12 +255,12 @@ def set_cardhand(new_hand: list):
 
 def set_discardpile(new_discardpile: list):
     """
-    Saves new_discardpile in the discardpile cvar or in the init metadata if the char has done !deck init join
+    Saves :new_discardpile: in the discardpile cvar or in the init metadata if the char has done !deck init join
     :arg list new_discardpile: The new list to put into the discardpile 
-    :var bool use_shared_deck: Determines where to save new_discardpile
+    :var bool use_shared_deck: Determines where to save :new_discardpile:
     """
 
-    # Saves new_discardpile to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    # Saves :new_discardpile: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
     if not use_shared_deck:
         _char.set_cvar("discardpile", dump_json(new_discardpile))
     else:
@@ -141,12 +268,12 @@ def set_discardpile(new_discardpile: list):
 
 def set_exhaustpile(new_exhaustpile):
     """
-    Saves new_exhaustpile in the exhaustpile cvar or in the init metadata if the char has done !deck init join
-    :arg list new_exhaustpile: The new list to put into the exhaustpile 
-    :var bool use_shared_deck: Determines where to save new_exhaustpile
+    Saves :new_exhaustpile: in the exhaustpile cvar or in the init metadata if the char has done !deck init join
+    :arg list new_exhaustpile: The new list to put into the exhaustpile.
+    :var bool use_shared_deck: Determines where to save :new_exhaustpile:
     """
 
-    # Saves new_exhaustpile to combat metadata if use_shared_deck is True, and saves it to the cvar otherwise.
+    # Saves :new_exhaustpile: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
     if not use_shared_deck:
         _char.set_cvar("exhaustpile", dump_json(new_exhaustpile))
     else:
@@ -178,7 +305,7 @@ def shuffle(cards: list):
 
     return cards
 
-def draw(cards: list, drawnum: int=1, ):
+def draw(cards: list, drawnum: int=1):
     """
     Draws (and removes) cards from the beginning of a list.
     :arg list cards: The list to draw the cards from.
@@ -199,5 +326,32 @@ def draw(cards: list, drawnum: int=1, ):
         drawn.append(
             cards.pop(0)
         )
-    
+
     return drawn
+
+def discard(input_cards: list, discard_from: list):
+    """
+    Removes cards from a list and adds them to the discardpile.
+    If taking user input for input_cards, it's recommended to use match(discard_from, input_cards)
+    :arg list input_cards: An exact list of the keys of the cards to discard. Examples of keys can be found
+    in the drawpile and discardpile cvars, and in deckLoaded.keys(). They are the same as the keys to the card
+    information in the deck's gvar.
+    :arg list discard_from: The list of card keys to discard from. Usually :cardhand:.
+    """
+
+    # The list that the discarded cards are temporarily stored in.
+    discarded = []
+
+    # Iterates over each card in :input_card: and discards them if their keys match the given input.
+    for card in input_cards:
+        # Builds a temporary list of indexes of the cards in :discard_from: the 
+        if (discard_card := ([i for i, v in enumerate(discard_from) if card.lower() == v.lower()]+[None])[0]):
+            discarded.append(
+                discard_from.pop(
+                    discard_card[0]
+                )
+            )
+
+    set_discardpile(discarded + discardpile)
+
+    return discarded

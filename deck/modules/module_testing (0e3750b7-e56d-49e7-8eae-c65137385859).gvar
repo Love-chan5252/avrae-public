@@ -1,7 +1,5 @@
 # Using this to test how variables interact with code inside of modules.
-# it's going very, very well. /non-sarcastic
 
-drawpile = []
+# using(test_module = "0e3750b7-e56d-49e7-8eae-c65137385859")
 
-def mod_draw(inp):
-    inp.append("Look, ma! An item!")
+aaa = []
