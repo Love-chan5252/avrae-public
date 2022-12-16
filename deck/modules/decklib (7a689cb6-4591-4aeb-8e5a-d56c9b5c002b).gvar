@@ -41,6 +41,7 @@ COMBAT_DRAWPILE_NAME = "shared_drawpile"
 COMBAT_DISCARDPILE_NAME = "shared_discardpile"
 COMBAT_EXHAUSTPILE_NAME = "shared_drawpile"
 DEFAULT_DECKS = ["f4b75892-9488-413e-88c9-20b8183541c6"]
+N = "\n"
 
 # ---------------------------
 # |   IMPORTANT VARIABLES   |
@@ -58,8 +59,24 @@ try:
     use_shared_deck = bool(
         _current_combat.me.get_effect(COMBAT_EFFECT_NAME)
     )
-else:
+except:
     use_shared_deck = False
+
+def default_deckload():
+    """
+    Returns the default value of :deckload:, because it's easier to save it in a function
+    until we need it than to waste time defining it.
+    :return: The default value of :deckload:
+    :rtype: dict
+    """
+    return {
+        "deckname": list(
+                load_json(
+                get_gvar(DEFAULT_DECKS[0])
+            ).keys()
+        )[0],
+        "gvar": DEFAULT_DECKS[0]
+    }
 
 # If not sharing cards in init, gets :deckload: from the char's personal settings.
 if not use_shared_deck:
@@ -67,24 +84,27 @@ if not use_shared_deck:
     # If deckload cvar is saved, use it to get :deckload:.
     if _char.get_cvar("deckload"):
         # Uses the cvar to get the saved deck info.
-        deckload = load_yaml(_char.get_cvar("deckload"))
+        deckload = load_yaml(
+            _char.get_cvar(
+                "deckload",
+                dump_yaml(default_deckload()) # The default returned if no metadata exists.
+            )
+        )
 
     # If no deckload cvar exists, creates :deckload: using the first option in
     # :DEFAULT_DECKS:, then saves it.
     else:
-        deckload = {
-            "deckname": (
-                load_json(
-                    get_gvar(DEFAULT_DECKS[0])
-                ).keys()
-            )[0],
-            "gvar": DEFAULT_DECKS[0]
-        }
+        deckload = default_deckload()
         set_deckload(deckload)
 
 # Gets :deckload: from the shared initiative settings.
 else:
-    deckload = load_yaml(_current_combat.get_metadata(COMBAT_DECKLOAD_NAME))
+    deckload = load_yaml(
+        _current_combat.get_metadata(
+            COMBAT_DECKLOAD_NAME,
+            dump_yaml(default_deckload()) # The default returned if no metadata exists.
+        )
+    )
 
 # Uses :deckload: to load the deck. :deckLoaded: is basically all of the card information.
 deckLoaded = (
@@ -92,6 +112,16 @@ deckLoaded = (
         get_gvar(deckload["gvar"])
     )
 )[deckload["deckname"]]
+
+def fresh_deck():
+    """
+    Used for resetting the deck.
+    :return: A list of all of the card keys of the loaded deck.
+    :rtype: list
+    """
+    return list(
+        deckLoaded.keys()
+    )
 
 # Loads :drawpile:, :cardhand:, :discardpile:, and :exhaustpile: according to the char's personal settings.
 if not use_shared_deck:
@@ -159,7 +189,116 @@ else:
 # |   FUNCTIONS   |
 # -----------------
 
-# ===== UTILITY FUNCTIONS =====
+# ===== EMBED UTILITIES =====
+
+def get_card_display_names(cards: list):
+    """
+    Gets the display names of the cards from their IDs.
+    :arg list cards: A list of the cards whose names you want to get, like :drawpile: or :cardhand:
+    :return: A list of card display names.
+    :rtype: list   
+    """
+    return [deckLoaded[i]["name"] for i in cards]
+
+def generate_fields(list_: list, fieldhead: str=ZERO_SPACE, splitby: int=5, inline: bool=True):
+    """
+    Spluts up a list of values (usually the names of cards) and generates field strings to display them.
+    :arg list list_: The list of values to split up.
+    :arg str fieldhead: The name at the top of each generated field. Appears blank by default.
+    :arg int splitby: The amount of items from the list to include in each field. 5 by default.
+    :arg bool inline: Whether to make the fields inline. True by default.
+    :return: A string containing all of the fields.
+    :rtype: str
+    """
+
+    # Generate the fields only if :list_: isn't empty.
+    if len(list_) > 0:
+
+        split_lists = []
+
+        # Generates a list of sub-lists, each with as many items as allowed by :splitby:
+        for i in range((len(list_) + splitby - 1)//splitby):
+            ## With default input, appends list_[0:5], then list_[5:10], list_[10:15] and so on
+            split_lists.append(
+                list_[i*splitby:(i + 1)*splitby]
+            )
+
+        out_fields = []
+
+        # Generates the fields from the items in the sub-lists.
+        for i in split_lists:
+            out_fields.append(
+                f"""-f "{fieldhead}|{N.join(i)}{'|inline' if inline else ''}" """
+            )
+        
+        # Returns the field strings, separated by spaces, as one big string.
+        return " ".join(out_fields)
+    
+    # Returns an empty string if :list_: is empty.
+    else:
+        return ""
+
+def cutstring(inp: str, cut: int=400):
+    """
+    Shortens strings that are too long to fit in embeds.
+    :arg str inp: The string. Only gets cut if it's too long.
+    :arg int cut: How long a string can be before it gets shortened. Default 400.
+    :return: The shortened string.
+    :rtype: str
+    """
+
+    # Slices the string short if it's too long.
+    if len(inp) > cut:
+        return inp[:cut] + f"... ({len(inp[cut:])} characters remaining)"
+    else:
+        return inp
+
+def effect_preview(effect: SimpleEffect):
+## Prints a quick preview of an effect as shown by a char's name in init on their turn
+    """
+    Re-creates the text of an init effect as it appears by a character's name on their turn in combat.
+    :arg SimpleEffect effect: The combat effect to create preview text for.
+    :return: The text of the init effect as it appears in-combat.
+    :rtype: str
+    """
+
+    return str(effect).splitlines()[:1]
+
+def current_cards_str():
+    """
+    Creates the string that reports the counts of your cards in each pile.
+    :return: The string reporting your current cards.
+    :rtype: str
+    """
+    
+    # Gets the number of cards in each pile to use.
+    drawpilelen = len(drawpile)
+    handlen = len(cardhand)
+    discardlen = len(discardpile)
+    exhaustlen = len(exhaustpile)
+
+    # Needs to be defined separately becuase all of the exhaust length is in an f-string
+    exhaustplural = f"{'cards' if exhaustlen != 1 else 'card'}"
+    
+    # Modifies to text to reflect whether the char is sharing cards in combat or not.
+    sharetext = f"{' shared ' if use_shared_deck else ' '}"
+    
+    # Builds the string and returns it.
+    return ("*"
+            + drawpilelen
+            + f" {'cards' if drawpilelen != 1 else 'card'} remaining in{sharetext}draw pile."
+            + "*" + N + "*"
+            + handlen
+            + f" {'cards' if handlen != 1 else 'card'} in hand."
+            + "*" + N + "*"
+            + discardlen
+            + f" {'cards' if discardlen != 1 else 'card'} in{sharetext}discard pile."
+            + "*"
+            # The exhaust string will only appear if you're a Cardistor (homebrew class) or if you have cards exhausted.
+            + (f""" {N + "*" + exhaustlen + sharetext + exhaustplural + " exhausted.*" if (character().levels.get("Cardistor")>=1 or exhaustlen>0) else ""}""")
+    )
+
+# ===== DECK MANAGEMENT UTILITIES =====
 
 def set_list(list_: list, new_contents: list) -> list:
     """
@@ -178,12 +317,12 @@ def set_list(list_: list, new_contents: list) -> list:
     
     return list_
 
-def match(match_from: list, inputs: list):
+def match(inputs: list, match_from: list):
     """
     Fetches the keys of cards in a list from inputs matching their display names.
     Gets up to 1 non-duplicate key for each input.
-    :arg list match_from: The list to grab the keys from, I.E. cardhand or discardpile.
     :arg list inputs: A list of strings to match against the card display names.
+    :arg list match_from: The list to grab the keys from, I.E. cardhand or discardpile.
     :var dict deckLoaded: All of the card information of the deck being used.
     :return: The list of matching card keys.
     """
@@ -210,6 +349,34 @@ def match(match_from: list, inputs: list):
                 break
 
     return out
+
+def seek(cards: list, seek_from: list):
+    """
+    Finds and removes cards from a specified list. 
+    If taking user input for cards, it's recommended to use cards=match(user_input, seek_from).
+    seek() is used to create the discard() and exhaust() functions.
+    :arg list cards: An exact list of the keys of the cards to look find and remove. Examples of keys can be found in the drawpile
+    or discardpile cvars, and in the output of fresh_deck(). They are the same as the keys in the deck's gvar.
+    :arg list seek_from: The list of cards to find and remove cards from. Usually :discardpile:, :drawpile:, or :cardhand:.
+    :return: The cards that were found and removed from :seek_from:
+    :rtype: list
+    """
+
+    sought = []
+
+    # Iterates over each card in :input_card:, saves and removes them if their keys match the given input.
+    for card in cards:
+        # Builds a temporary list of indexes of the cards in :discard_from: that match the input currently being tested,
+        # then returns the index of the first match and runs the following code if it isn't None.
+        if (found := ([i for i, v in enumerate(discard_from) if card.lower() == v.lower()]+[None])[0]):
+            # Saves and removes the first matching card if a match was found.
+            sought.append(
+                discard_from.pop(
+                    found  # :found: is an int, the index of the matching card.
+                )
+            )
+
+    return sought
 
 # ===== DECK DATA STORING =====
 
@@ -279,6 +446,54 @@ def set_exhaustpile(new_exhaustpile):
     else:
         _current_combat.set_metadata(COMBAT_EXHAUSTPILE_NAME, dump_json(new_exhaustpile))
 
+def reset_deck():
+    if autoshuffle_on_reset:
+        reset_pile = shuffle(fresh_deck())
+        set_drawpile(reset_pile)
+    else:
+        reset_pile = fresh_deck()
+        set_drawpile(reset_pile)
+
+    set_cardhand([])
+    set_discardpile([])
+    set_exhaustpile([])
+
+    for i in range(len(cardhand)):
+        cardhand.pop(0)
+    for i in range(len(discardpile)):
+        discardpile.pop(0)
+    for i in range(len(exhaustpile)):
+        exhaustpile.pop(0)
+
+    return reset_pile
+
+def reset_deck():
+    """
+    Resets :drawpile: to the deck's base cards, clears :cardhand:, :discardpile:, and :exhaustpile:,
+    then saves the deck info to the cvars or metadata to reflect those changes.
+    :return: The new drawpile's contents.
+    :rtype: list
+    """
+
+    # Puts the base deck's cards into :drawpile: and saves it in the drawpile cvar or metadata.
+    set_list(drawpile, fresh_deck())
+    set_drawpile(drawpile)
+
+    # Empties :cardhand: then saves it in the cardhand cvar or metadata.
+    cardhand.clear()
+    set_cardhand([])
+
+    # Empties :discardpile: then saves it in the discardpile cvar or metadata.
+    discardpile.clear()
+    set_discardpile([])
+    
+    # Empties :exhaustpile: then saves it in the exhaustpile cvar or metadata.
+    exhaustpile.clear()
+    set_exhaustpile([])    
+
+    return drawpile
+
+
 # ===== DECK MANIPULATION =====
 
 def shuffle(cards: list):
@@ -289,10 +504,9 @@ def shuffle(cards: list):
     :rtype: list
     """
 
-    # The list that the shuffled cards are temporarily stored in.
     shuffled = []
 
-    # Puts all of the cards, randomly reordered, into shuffled.
+    # Puts all of the cards, randomly reordered, into :shuffled:.
     for _ in range(len(cards)):
         shuffled.append(
             cards.pop(
@@ -305,53 +519,77 @@ def shuffle(cards: list):
 
     return cards
 
-def draw(cards: list, drawnum: int=1):
+def draw(draw_from: list, drawnum: int=1):
     """
-    Draws (and removes) cards from the beginning of a list.
-    :arg list cards: The list to draw the cards from.
+    Draws (and removes) cards from the beginning of a list and puts them into your hand.
+    :arg list draw_from: The list to draw the cards from.
     :arg int drawnum: The number of cards to draw. You cannot draw more cards than are inside the list.
+    :return: A list of the drawn cards.
+    :rtype: list
     """
 
     # Makes sure that not too many cards are drawn.
     drawnum = min(
         max(1, drawnum),
-        len(cards)
+        len(draw_from)
     )
 
-    # The list that the drawn cards are temporarily stored in.
     drawn = []
     
     # Draws the cards and puts them into drawn.
     for _ in range(drawnum):
         drawn.append(
-            cards.pop(0)
+            draw_from.pop(0)
         )
+
+    # Adds the drawn cards to :cardhand:.
+    cardhand.extend(drawn)
+
+    # Saves :cardhand: in the cvar or combat metadata.
+    set_cardhand(cardhand)
 
     return drawn
 
-def discard(input_cards: list, discard_from: list):
+def discard(cards: list, discard_from: list):
     """
-    Removes cards from a list and adds them to the discardpile.
-    If taking user input for input_cards, it's recommended to use match(discard_from, input_cards)
-    :arg list input_cards: An exact list of the keys of the cards to discard. Examples of keys can be found
-    in the drawpile and discardpile cvars, and in deckLoaded.keys(). They are the same as the keys to the card
-    information in the deck's gvar.
+    Removes cards from a list and adds them to the discard pile.
+    If taking user input for cards, it's recommended to use cards=match(user_input, discard_from)
+    :arg list cards: An exact list of the keys of the cards to discard. Look in the docstring for seek() for more about card keys.
     :arg list discard_from: The list of card keys to discard from. Usually :cardhand:.
+    :return: A list of the discarded cards.
+    :rtype: list
     """
 
-    # The list that the discarded cards are temporarily stored in.
-    discarded = []
+    # Finds and removes the matching cards in :cards: from :discard_from:.
+    discarded = seek(cards, discard_from)
 
-    # Iterates over each card in :input_card: and discards them if their keys match the given input.
-    for card in input_cards:
-        # Builds a temporary list of indexes of the cards in :discard_from: the 
-        if (discard_card := ([i for i, v in enumerate(discard_from) if card.lower() == v.lower()]+[None])[0]):
-            discarded.append(
-                discard_from.pop(
-                    discard_card[0]
-                )
-            )
+    # Adds the discarded cards to :discardpile: 
+    discardpile.extend(discarded)
 
-    set_discardpile(discarded + discardpile)
+    # Saves :discardpile: in the cvar or combat metadata.
+    set_discardpile(discardpile)
 
     return discarded
+
+def exhaust(cards: list, exhaust_from: list):
+    """
+    Removes cards from a list and adds them to the exhaust pile.
+    If taking user input for cards, it's recommended to use cards=match(user_input, exhaust_from)
+    :arg list cards: An exact list of the keys of the cards to exhaust. Look in the docstring for seek() for more about card keys.
+    :arg list exhaust_from: The list of card keys to exhaust from. Usually :cardhand:.
+    :return: A list of the exhausted cards.
+    :rtype: list
+    """
+
+    # Finds and removes the matching cards in :cards: from :exhaust_from:.
+    exhausted = seek(cards, exhaust_from)
+
+    # Adds the exhausted cards to :exhaustpile: 
+    exhaustpile.extend(exhausted)
+
+    # Saves :exhaustpile: in the cvar or combat metadata.
+    set_exhaustpile(exhaustpile)
+
+    return exhausted
+
+
