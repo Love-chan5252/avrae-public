@@ -431,15 +431,17 @@ def seek(cards: list, seek_from: list):
 
     sought = []
 
-    # Iterates over each card in :input_card:, saves and removes them if their keys match the given input.
+    # Used in case :cards: and :seek_from: are the same list, like when discarding your whole hand.
+    cards = cards.copy()
+
+    # Iterates over each card in :cards:, saves and removes them if their keys match the given input.
     for card in cards:
-        # Builds a temporary list of indexes of the cards in :discard_from: that match the input currently being tested,
-        # then returns the index of the first match and runs the following code if it isn't None.
-        if (found := ([i for i, v in enumerate(discard_from) if card.lower() == v.lower()]+[None])[0]):
+        # Finds a match and returns a one-item tuple containing the index of the matching card.
+        if (found := ([(i,) for i, v in enumerate(seek_from) if card.lower() == v.lower()]+[None])[0]):
             # Saves and removes the first matching card if a match was found.
             sought.append(
-                discard_from.pop(
-                    found  # :found: is an int, the index of the matching card.
+                seek_from.pop(
+                    found[0]  # :found: is an int, the index of the matching card.
                 )
             )
 
