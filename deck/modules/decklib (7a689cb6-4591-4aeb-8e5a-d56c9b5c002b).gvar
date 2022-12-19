@@ -104,7 +104,7 @@ COMBAT_EFFECT_NAME = "Playing Cards"
 COMBAT_DECKLOAD_NAME = "init_deckload"
 COMBAT_DRAWPILE_NAME = "shared_drawpile"
 COMBAT_DISCARDPILE_NAME = "shared_discardpile"
-COMBAT_EXHAUSTPILE_NAME = "shared_drawpile"
+COMBAT_EXHAUSTPILE_NAME = "shared_exhaustpile"
 DEFAULT_DECKS = ["f4b75892-9488-413e-88c9-20b8183541c6"]
 N = "\n"
 
@@ -331,9 +331,10 @@ def effect_preview(effect: SimpleEffect):
 
     return str(effect).splitlines()[:1]
 
-def current_cards_str():
+def current_cards_str(force_shared=False):
     """
     Creates the string that reports the counts of your cards in each pile.
+    :arg bool force_shared: Whether to force the use of the word "shared" in the card pile reports. Default False.
     :return: The string reporting your current cards.
     :rtype: str
     """
@@ -348,7 +349,7 @@ def current_cards_str():
     exhaustplural = f"{'cards' if exhaustlen != 1 else 'card'}"
     
     # Modifies to text to reflect whether the char is sharing cards in combat or not.
-    sharetext = f"{' shared ' if use_shared_deck else ' '}"
+    sharetext = f"{' shared ' if use_shared_deck or force_shared else ' '}"
     
     # Builds the string and returns it.
     return ("*"
