@@ -41,7 +41,7 @@ def format_json(json, indentation=2, iterations: int=1):
             out += indent*iterations
             new_iter = iterations + 1
             out += format_json(subkey, indentation, iterations=new_iter)
-            out += ":"
+            out += ": "
             out += format_json(subval, indentation, iterations=new_iter)
             out += "," + n
         out = out.strip("," + n)
