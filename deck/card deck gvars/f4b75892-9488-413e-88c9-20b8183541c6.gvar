@@ -2,8 +2,8 @@
     "DefaultSimpleCards":{
         "Two of Spades":{
             "name":":two::spades: Two of Spades",
-            "apology":"The JSON-formatter test strings that I was using were still here in the published version. I forgor. I'm sorry.",
-            "note":"(note and apology statement will be removed next patch.)"
+            "deck v1.2.0":"All of !deck's functions are now a part of decklib!",
+            "decklib":"See it here at !gvar f4b75892-9488-413e-88c9-20b8183541c6"
         },
         "Three of Spades":{
             "name":":three::spades: Three of Spades"
