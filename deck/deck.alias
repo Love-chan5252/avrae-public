@@ -2,7 +2,7 @@
 args = &ARGS&
 N,ZERO_SPACE,TRIPLE_BACK_TICKS = "\n","\u200c","`"+"`"+"`"
 VARNAME = "custom_decks"
-FOOTER_STRING = "!deck | v1.1.2 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = "!deck | v1.2.0 | Lovingly made by @""Love-chan#5252"
 
 c = combat()
 character_pic = image
@@ -63,12 +63,20 @@ if not args or "help" in args[:1]:
 
 if "draw" == args[0]:
     
-    cardhand_display_fields = decklib.generate_fields(decklib.get_card_display_names(decklib.cardhand), "**Cards Already In Hand:**")
+    cardhand_display_fields = decklib.generate_fields(
+        decklib.get_card_display_names(
+            decklib.cardhand
+        ),
+        "**Cards Already In Hand:**"
+        )
     
     card_str = decklib.current_cards_str()
 
     if len(drawpile) == 0:
         return f"""embed -title "{name} has no cards left to draw!" -desc "{card_str}" {cardhand_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+
+    draw_err = ""
+    cards_drawn = 1
 
     if len(args) >= 2:
         if numbertool.isint(args[1]):
@@ -76,24 +84,24 @@ if "draw" == args[0]:
                 1, 
                 min(int(args[1]), len(drawpile))
                 )
-            draw_err = ""
         else:
             if (bad_args := args[1].replace('"', '\\"')):
                 draw_err = f"""-f "Oops!|You inputted `{bad_args}` instead of how many cards you wanted to draw! Only whole, positive numbers will be accepted! Only 1 card will be drawn otherwise." """
-            else:
-                draw_err = ""
-            cards_drawn = 1
-    
-    else:
-        draw_err = ""
-        cards_drawn = 1
 
-    drawn = decklib.draw(decklib.drawpile, cards_drawn)
+    drawn = decklib.draw(
+        decklib.drawpile,
+        cards_drawn
+    )
     decklib.set_drawpile(decklib.drawpile)
 
     card_str = decklib.current_cards_str()
 
-    drawn_display_fields = decklib.generate_fields(decklib.get_card_display_names(drawn), "**Drawn Cards:**")
+    drawn_display_fields = decklib.generate_fields(
+        decklib.get_card_display_names(
+            drawn
+        ),
+        "**Drawn Cards:**"
+    )
     
     return f"""embed -title "{name} draws {cards_drawn} {"card" if cards_drawn==1 else "cards"} from {possessive} draw pile and adds {"it" if cards_drawn==1 else "them"} to {their} hand!" -desc "*Drawn from {decklib.deckload["deckname"]}.*{N + N + card_str}" {drawn_display_fields} {cardhand_display_fields} {draw_err} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 ## """
@@ -104,7 +112,12 @@ if "hand" == args[0]:
 
     card_str = decklib.current_cards_str()
 
-    hand_display_fields = decklib.generate_fields(decklib.get_card_display_names(decklib.cardhand), "Cards In Hand:")
+    hand_display_fields = decklib.generate_fields(
+        decklib.get_card_display_names(
+            decklib.cardhand
+        ),
+        "Cards In Hand:"
+    )
 
     handphrases = load_json(
                     f"""["checks", "takes a peek at", "browses", "sifts through", "couldn't memorize",
@@ -118,7 +131,7 @@ if "hand" == args[0]:
                     "rolled a nat 20 with", "rolled a nat 1 with", "might have a good", "messes with",
                     "fidgets with", "worries over", "reads fine literature with", "is bleeding",
                     "wants to DM Love-chan#5252 with a suggestion for the text that appears when {they} {pronouns.verb('checks', 'check')}",
-                    "verbs", "[adjective] [verb]'s", "has a sudden compulsion to eat", "wants to throw out",
+                    "verbs", "has a sudden compulsion to eat", "wants to throw out",
                     "can't tell the difference between garbage and", "sobs at floor 1 jaw worm with",
                     "is praying to snecko as {they} {pronouns.verb('sobs', 'sob')} at", "husks at", "<:husk:994063369655042069>'s at"]"""
                 )
@@ -128,6 +141,31 @@ if "hand" == args[0]:
 ## """
 ## Use `!deck hand` to check the contents of your hand!
 ## """
+
+if "exhaust" == args[0]:
+    if len(args) >= 2:
+        # Exhausts only the specified cards from the hand.
+        exhausted = decklib.exhaust(
+            decklib.match(
+                args[1:],
+                decklib.cardhand
+            ),
+            decklib.cardhand
+        )
+    
+        decklib.set_cardhand(decklib.cardhand)
+
+        exhausted = ["~~*" + i + "*~~" for i in decklib.get_card_display_names(exhausted)]
+
+        exhausted_display_fields = decklib.generate_fields(exhausted, "**Exhausted Cards:**")
+
+        cardhand_display_fields = decklib.generate_fields(decklib.get_card_display_names(decklib.cardhand), "**Cards In Hand:**")
+
+        card_str = decklib.current_cards_str()
+
+        return f"""embed -title "{name} {'exhausts' if exhausted else 'tries to exhaust'}!" -desc "{card_str}{N + N + '`No matches found!`' if not exhausted else ''}" {cardhand_display_fields} {exhausted_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+    else:
+        return f"""embed -title "{name} tries to exhaust!" -desc "You didn't select any cards! Try `!deck exhaust [name of card]`." -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 
 if "discard" == args[0]:
     if len(args) >= 2:
@@ -153,15 +191,29 @@ if "discard" == args[0]:
         ## Fetches names and creates fields to show the remaining cardhand for display.
         cardhand_display_fields = decklib.generate_fields(decklib.get_card_display_names(decklib.cardhand), "**Cards In Hand:**")
 
-        return f"""embed -title "{name} {'discards' if discarded else 'tries to discard'}!" -desc "{decklib.current_cards_str()}{N+N+'`No matches found!`' if not discarded else ''}" {cardhand_display_fields} {discard_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+        card_str = decklib.current_cards_str()
+
+        return f"""embed -title "{name} {'discards' if discarded else 'tries to discard'}!" -desc "{card_str}{N + N + '`No matches found!`' if not discarded else ''}" {cardhand_display_fields} {discard_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 
     else:
         ## Discards the entire hand.
-        discarded = decklib.discard(decklib.cardhand, decklib.cardhand)
+        discarded = decklib.discard(
+            decklib.cardhand,
+            decklib.cardhand
+        )
+
         decklib.set_cardhand(decklib.cardhand)
+
         discarded = ["*" + i + "*" for i in decklib.get_card_display_names(discarded)]
-        discard_display_fields = decklib.generate_fields(discarded, "**Discarded Cards:**")
-        return f"""embed -title "{name} discards {their} hand!" -desc "*Hand placed on top of discard pile.*{N+N+decklib.current_cards_str()}" {discard_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+
+        discard_display_fields = decklib.generate_fields(
+            discarded,
+            "**Discarded Cards:**"
+        )
+
+        card_str = decklib.current_cards_str()
+
+        return f"""embed -title "{name} discards {their} hand!" -desc "*Hand placed on top of discard pile.*{N + N + card_str}" {discard_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 ## """
 ## Use `!deck discard` to move all of the cards from your hand to your discard pile!
 ## {N+N}
@@ -181,26 +233,30 @@ if "reset" == args[0]:
     
     if autoshuffle_on_reset:
         decklib.set_drawpile(decklib.shuffle(decklib.drawpile))
-
-    if autoshuffle_on_reset:
         shuffle_msg = "*Drawpile automatically shuffled!*"
     else: 
         shuffle_msg = f"*Remember to shuffle! (`!deck shuffle`)*{N}*Toggle automatic shuffling-on-reset with `!deck reset automatic`!*"
     
     card_str = decklib.current_cards_str()
 
-    return f"""embed -title "{name} resets {possessive} cards!" -desc "*Draw pile reset to `{decklib.deckload["deckname"]}`.*{N+N+card_str+N+N+shuffle_msg}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+    return f"""embed -title "{name} resets {possessive} cards!" -desc "*Draw pile reset to `{decklib.deckload["deckname"]}`.*{N + N + card_str + N + N + shuffle_msg}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 ## """
 ## Use `!deck reset` to completely reset your drawpile to the currently selected deck. In shared card initiative, everyone must discard their cards first, or else it's called cheating!
 ## {N}Automatic shuffling on reset: `{autoshuffle_on_reset}`
 ## """
 
 def reshuffle():
-    shuffled = shuffle(drawpile + discardpile)
-    set_drawpile(shuffled)
-    set_discardpile([])
-    card_str = decklib.current_cards_str(drawpile=shuffled, discardpile = [])
-    return f"""embed -title "{name} shuffles {possessive} discard pile into {possessive} draw pile!" -desc "*Discard pile shuffled into draw pile.*{N+card_str}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """ 
+    shuffled = decklib.shuffle(decklib.drawpile + decklib.discardpile)
+
+    decklib.set_drawpile(shuffled)
+    decklib.set_list(decklib.drawpile, shuffled)
+    
+    decklib.set_discardpile([])
+    decklib.set_list(decklib.discardpile, [])
+
+    card_str = decklib.current_cards_str()
+    
+    return f"""embed -title "{name} shuffles {possessive} discard pile into {possessive} draw pile!" -desc "*Discard pile shuffled into draw pile.*{N + N + card_str}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """ 
 
 if "reshuffle" == args[0]:
     return reshuffle()
@@ -209,10 +265,11 @@ if "shuffle" == args[0]:
     if len(args) >= 2:
         if args[1] in "discarded":
             return reshuffle()
-    shuffled = shuffle(cards=drawpile)
-    drawpile = shuffled
-    set_drawpile(shuffled)
-    return f"""embed -title "{name} shuffles {possessive} draw pile!" -desc "*Drawpile shuffled still containing previous cards.*{N+N}Use `!deck reset` to completely reset your cards.{N+N}Use `!deck shuffle discard` or `!deck reshuffle` to shuffle your discard pile into your draw pile.{N+N+decklib.current_cards_str()}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+
+    shuffled = decklib.shuffle(decklib.drawpile)
+    decklib.set_drawpile(shuffled)
+    card_str = decklib.current_cards_str()
+    return f"""embed -title "{name} shuffles {possessive} draw pile!" -desc "*Drawpile shuffled containing no new cards.*{N + N}Use `!deck reset` to completely reset your cards.{N + N}Use `!deck shuffle discard` or `!deck reshuffle` to shuffle your discard pile into your draw pile.{N + N + card_str}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 ## """
 ## Use `!deck shuffle` to shuffle your draw pile.
 ## {N+N}
@@ -247,13 +304,15 @@ if "select" == args[0] or "load" == args[0]:
     if len(args) >= 2:
         if str(args[1]) in sourceselect:
             userselection = sourceselect[str(args[1])]
-            set_deckload(userselection)
+            decklib.set_deckload(userselection)
 
-            deckLoaded = (load_json(get_gvar(userselection["gvar"])))[userselection["deckname"]]  #sets the selected deck as deckLoaded for use in reset_deck()
-            drawpile = reset_deck()  #calls on fresh_deck() which calls on deckLoaded
+            decklib.deckLoaded.clear()
+            decklib.deckLoaded.update((load_json(get_gvar(userselection["gvar"])))[userselection["deckname"]])  #sets the selected deck as deckLoaded for use in reset_deck()
+            drawpile = decklib.reset_deck()  #calls on fresh_deck() which calls on deckLoaded
             ## ^^ sets drawpile for use in decklib.current_cards_str()
 
             if autoshuffle_on_reset:
+                decklib.set_drawpile(decklib.shuffle(decklib.drawpile))
                 shuffle_msg = "*Drawpile automatically shuffled!*"
             else: 
                 shuffle_msg = f"*Remember to shuffle! (`!deck shuffle`)*{N}*Toggle automatic shuffling-on-reset with `!deck reset automatic`!*"
@@ -280,7 +339,7 @@ if "select" == args[0] or "load" == args[0]:
                                + TRIPLE_BACK_TICKS
                                + 'json'
                                + N
-                               + (cutstring(
+                               + (decklib.cutstring(
                                     json.format_json(get_deck),
                                     400)
                                  ).replace('"', '\\"')
@@ -301,35 +360,35 @@ if "init" == args[0] or "i" == args[0]:
             if c.me:
                 init_dataset_message = ""
 
-                if not c.get_metadata(COMBAT_DECKLOAD_NAME):
-                    c.set_metadata(COMBAT_DECKLOAD_NAME, dump_yaml(decklib.deckload))
+                if not c.get_metadata(decklib.COMBAT_DECKLOAD_NAME):
+                    c.set_metadata(decklib.COMBAT_DECKLOAD_NAME, dump_yaml(decklib.deckload))
                     init_dataset_message += ("*Init deckload set to your current deckload.*"
                                              + N)
 
-                if not (combat_drawpile := c.get_metadata(COMBAT_DRAWPILE_NAME)):
-                    c.set_metadata(COMBAT_DRAWPILE_NAME, dump_json(drawpile))
+                if not (combat_drawpile := c.get_metadata(decklib.COMBAT_DRAWPILE_NAME)):
+                    c.set_metadata(decklib.COMBAT_DRAWPILE_NAME, dump_json(decklib.drawpile))
                     init_dataset_message += ("*Init drawpile set to your current drawpile.*"
                                              + N)
                 else:
-                    drawpile = load_json(combat_drawpile)
+                    decklib.set_list(decklib.drawpile, load_json(combat_drawpile))
 
-                if not (combat_discardpile := c.get_metadata(COMBAT_DISCARDPILE_NAME)):
-                    c.set_metadata(COMBAT_DISCARDPILE_NAME, dump_json(discardpile))
+                if not (combat_discardpile := c.get_metadata(decklib.COMBAT_DISCARDPILE_NAME)):
+                    c.set_metadata(decklib.COMBAT_DISCARDPILE_NAME, dump_json(decklib.discardpile))
                     init_dataset_message += ("*Init discardpile set to your current discardpile.*"
                                              + N)
                 else:
-                    discardpile = load_json(combat_discardpile)
+                    decklib.set_list(decklib.discardpile, load_json(combat_discardpile))
 
-                if not (combat_exhaustpile := c.get_metadata(COMBAT_EXHAUSTPILE_NAME)):
-                    c.set_metadata(COMBAT_EXHAUSTPILE_NAME, dump_json(exhaustpile))
-                    if (character().levels.get("Cardistor")>=1 or len(exhaustpile)>0):
+                if not (combat_exhaustpile := c.get_metadata(decklib.COMBAT_EXHAUSTPILE_NAME)):
+                    c.set_metadata(decklib.COMBAT_EXHAUSTPILE_NAME, dump_json(decklib.exhaustpile))
+                    if (character().levels.get("Cardistor")>=1 or len(decklib.exhaustpile)>0):
                         init_dataset_message += ("*Init exhaustpile set to your current exhaustpile.*"
-                                                + N)
+                                                 + N)
                 else:
-                    exhaustpile = load_json(combat_exhaustpile)
+                    decklib.set_list(decklib.exhaustpile, load_json(combat_exhaustpile))
 
-                c.set_metadata(combat_hand_name, dump_json(cardhand))
-                handlen = len(cardhand)
+                c.set_metadata(combat_hand_name, dump_json(decklib.cardhand))
+                handlen = len(decklib.cardhand)
                 if handlen > 0:
                     cheatmsg = f" Carried over {handlen} " + ("cards." if handlen != 1 else "card.")
                 else:
@@ -339,20 +398,20 @@ if "init" == args[0] or "i" == args[0]:
                                         + "*"
                                         + N)
 
-                init_dataset_message += N + decklib.current_cards_str(drawpile=drawpile, cardhand=cardhand, discardpile=discardpile, exhaustpile=exhaustpile)
+                init_dataset_message += N + decklib.current_cards_str()
 
                 c.me.add_effect(
-                    COMBAT_EFFECT_NAME,
+                    decklib.COMBAT_EFFECT_NAME,
                     desc=f"{name} is sharing a drawpile, discardpile, and exhaustpile with the other card players in initiative."
                 )
-                return f"""embed -title "{name} is now sharing cards with other creatures in initiative!" -desc "{init_dataset_message}" -f "{name}|**Effect:** {effect_preview(c.me.get_effect(COMBAT_EFFECT_NAME))}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
+                return f"""embed -title "{name} is now sharing cards with other creatures in initiative!" -desc "{init_dataset_message}" -f "{name}|**Effect:** {decklib.effect_preview(c.me.get_effect(COMBAT_EFFECT_NAME))}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 
             else:
                 return f"""embed -title "{name} can't join the card players!" -desc "{name} isn't in initiative!" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 
     ## Just shows some information about the current shared initiative.
     if c:
-        card_players = [combatant.name for combatant in c.combatants if combatant.get_effect(COMBAT_EFFECT_NAME)]
+        card_players = [combatant.name for combatant in c.combatants if combatant.get_effect(decklib.COMBAT_EFFECT_NAME)]
         if card_players:
             card_player_msg = "`" + "`, `".join(card_players) + "`" + f"{'is' if len(card_players) == 1 else 'are'} currently sharing cards."
         else:
@@ -360,7 +419,7 @@ if "init" == args[0] or "i" == args[0]:
 
         combat_card_data = ""
 
-        if (deckload := c.get_metadata(COMBAT_DECKLOAD_NAME)):
+        if (deckload := c.get_metadata(decklib.COMBAT_DECKLOAD_NAME)):
             combat_card_data += ("**Combat Deckload:**"
                                 + TRIPLE_BACK_TICKS
                                 + "yaml"
@@ -370,28 +429,28 @@ if "init" == args[0] or "i" == args[0]:
         else:
             combat_card_data += '**No Combat \\"deckload\\" set.**' + N + N
         
-        if (combat_drawpile := c.get_metadata(COMBAT_DRAWPILE_NAME)):
-            drawpile = load_json(combat_drawpile)
+        if (combat_drawpile := c.get_metadata(decklib.COMBAT_DRAWPILE_NAME)):
+            decklib.set_list(decklib.drawpile, load_json(combat_drawpile))
         else:
-            drawpile = []
+            decklib.set_list(decklib.drawpile, [])
         
-        if (combat_discardpile := c.get_metadata(COMBAT_DISCARDPILE_NAME)):
-            discardpile = load_json(combat_discardpile)
+        if (combat_discardpile := c.get_metadata(decklib.COMBAT_DISCARDPILE_NAME)):
+            decklib.set_list(decklib.discardpile, load_json(combat_discardpile))
         else:
-            discardpile = []
-        
-        if (combat_exhaustpile := c.get_metadata(COMBAT_EXHAUSTPILE_NAME)):
-            exhaustpile = load_json(combat_exhaustpile)
-        else:
-            exhaustpile = []
+            decklib.set_list(decklib.discardpile, [])
 
-        combat_card_data += decklib.current_cards_str(drawpile=drawpile, cardhand=cardhand, discardpile=discardpile, exhaustpile=exhaustpile, shared=True)
+        
+        if (combat_exhaustpile := c.get_metadata(decklib.COMBAT_EXHAUSTPILE_NAME)):
+            decklib.set_list(decklib.exhaustpile, load_json(combat_exhaustpile))
+        else:
+            decklib.set_list(decklib.exhaustpile, [])
+
+        combat_card_data += decklib.current_cards_str(force_shared=True)
         
         return f"""embed -title "{name} checks on the current shared deck!" -desc "{combat_card_data}" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 
     ## Returns if there is no combat to report and there is no `!init join`
     return f"""embed -title "There's no active initiative or shared deck to check on!" -desc "Try sharing your cards by joining initiative, then using `!deck init join`!" -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
-
 
 ## """
 ## Use `!deck init` to check the current state of the shared deck initiative. Characters in shared deck initiative share the same draw pile, discard pile, and exhaust pile.
