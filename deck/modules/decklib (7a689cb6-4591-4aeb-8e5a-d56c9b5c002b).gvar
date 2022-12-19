@@ -391,7 +391,6 @@ def match(inputs: list, match_from: list):
     Gets up to 1 non-duplicate key for each input.
     :arg list inputs: A list of strings to match against the card display names.
     :arg list match_from: The list to grab the keys from, I.E. cardhand or discardpile.
-    :var dict deckLoaded: All of the card information of the deck being used.
     :return: The list of matching card keys.
     """
 
@@ -455,7 +454,6 @@ def set_deckload(new_deckload: list):
     Saves :new_deckload: in the __ cvar or in the init metadata if the char has done !deck init join.
     WARNING: You usually do not want to modify the deckload cvar. An invalid deckload is the easiest way to break the alias.
     :arg list new_deckload: The new list to put into the deckload.
-    :var bool use_shared_deck: Determines where to save :new_deckload:.
     """
 
     # Saves :new_deckload: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
@@ -468,7 +466,6 @@ def set_drawpile(new_drawpile: list):
     """
     Saves :new_drawpile: in the drawpile cvar or in the init metadata if the char has done !deck init join
     :arg list new_drawpile: The new list to put into the drawpile 
-    :var bool use_shared_deck: Determines where to save :new_drawpile:
     """
 
     # Saves :new_drawpile: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
@@ -481,7 +478,6 @@ def set_cardhand(new_hand: list):
     """
     Saves :new_hand: in the cardhand cvar or in the init metadata if the char has done !deck init join
     :arg list new_hand: The new list to put into the cardhand 
-    :var bool use_shared_deck: Determines where to save :new_hand:
     """
 
     # Saves :new_hand: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
@@ -494,7 +490,6 @@ def set_discardpile(new_discardpile: list):
     """
     Saves :new_discardpile: in the discardpile cvar or in the init metadata if the char has done !deck init join
     :arg list new_discardpile: The new list to put into the discardpile 
-    :var bool use_shared_deck: Determines where to save :new_discardpile:
     """
 
     # Saves :new_discardpile: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
@@ -507,7 +502,6 @@ def set_exhaustpile(new_exhaustpile):
     """
     Saves :new_exhaustpile: in the exhaustpile cvar or in the init metadata if the char has done !deck init join
     :arg list new_exhaustpile: The new list to put into the exhaustpile.
-    :var bool use_shared_deck: Determines where to save :new_exhaustpile:
     """
 
     # Saves :new_exhaustpile: to combat metadata if :use_shared_deck: is True, and saves it to the cvar otherwise.
