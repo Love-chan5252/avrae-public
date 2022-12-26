@@ -15,13 +15,30 @@ points = (0, 2, 3, 5, 6, 7, 9, 10, 11, 13)
 # If no spell points exist yet, creates a counter and returns an embed
 # detailing the new spell point total.
 # Will also return this embed if using !spcast POINTS
-if ch.cc_exists(CCNAME):
+if ch.cc_exists(CCNAME) and not "POINTS" in args:
     spell_points = ch.get_cc(CCNAME)
 
 else:
     # Finds what your spell point total should be.
-    points_by_level = (4, 6, 14, 17, 27, 32, 38, 44, 57, 64, 73, 73, 83, 83, 94, 94, 107, 114, 123, 133)
+    points_by_level = (0, 4, 6, 14, 17, 27, 32, 38, 44, 57, 64, 73, 73, 83, 83, 94, 94, 107, 114, 123, 133)
     
+    ch.set_cvar_nx("spcast_settings", 
+        dump_json(
+            {
+                "include_metamagic_adept": False,
+                "include_sorcery_points": False
+            }
+        )
+    )
+    spcast_settings = load_json(ch.get_cvar("spcast_settings"))
+
+    extra_points = 0
+    if spcast_settings["include_metamagic_adept"]:
+        extra_points += 2
+    if spcast_settings["include_sorcery_points"]:
+        if ch.levels.get("Sorcerer") >= 2:
+            extra_points += SorcererLevel
+
     # Stores the number of how many instances of a class/subclass equals one caster level. 
     casting_classes = {
         "Bard": 1,
@@ -31,8 +48,8 @@ else:
         "Wizard": 1,
         "Paladin": 2,
         "Ranger": 2,
-        "Fighter (Eldritch Knight)": 3,
-        "Rogue (Arcane Trickster": 3
+        "Eldritch Knight": 3,
+        "Arcane Trickster": 3
     }
 
     if ch.get_cvar("casting_classes"):
@@ -57,26 +74,29 @@ else:
 
     for class_, lvl in ch.levels:
         if class_ in casting_classes:
-            caster_level += (
-                floor(
-                    lvl / casting_classes[class_]
-                )
-            )
-    
+            my_levels[class_] = floor(
+                lvl / casting_classes[class_]
+            )        
+
     if (subclass := ch.get_cvar("subclass")):
         for k, v in load_json(subclass).items():
-            for class_, lvl in ch.levels:
-            " (" + v + ")"
+            if (key := k[:-5] + " (" + v + ")") in casting_classes:
+                my_levels[key] = floor(
+                    ch.levels.get(k[:-5]) / casting_classes[key]
+                )
     else:
         return """embed -title "You haven't run `!level` yet!" -desc "This alias needs to fetch your subclass levels in order to calculate your spell points! To allow it to do so, please subscribe to **Verbose Character Tools** here: https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d and run `!level` at least once." """
 
     for k, v in my_levels.items():
         caster_level += v
 
-    ch.create_cc("Spell Points",
+    new_counter = ch.create_cc("Spell Points",
         minVal="0",
-        maxVal=f"{points_by_level[caster_level]}")
+        maxVal=f"{points_by_level[caster_level] + extra_points}",
+        reset="long"
+    )
 
+    return f"""embed -title "New Counter 'Spell Points' Created." -desc "{new_counter.full_str(True) + N + N}Metamagic Adept Points Included: `{spcast_settings['include_metamagic_adept']}.`{N}Sorcery Points Included: `{spcast_settings['include_sorcery_points']}`.{N+N}If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spcast_settings` cvar to `True`." """
 
-
+return "echo Pog"
 </drac2>
