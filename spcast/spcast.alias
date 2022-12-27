@@ -1,4 +1,9 @@
 <drac2>
+N = '\n'
+CCNAME = 'Spell Points'
+FOOTER_STRING = "!spcast | v1.0.0 | Lovingly made by @""Love-chan#5252"
+CHARACTER_PIC = image
+
 args = &ARGS&
 parsed_args = argparse(args)
 ignore = parsed_args.get('i',
@@ -6,9 +11,6 @@ ignore = parsed_args.get('i',
     type_=bool)
 
 ch = character()
-
-N = '\n'
-CCNAME = 'Spell Points'
 
 points = (0, 2, 3, 5, 6, 7, 9, 10, 11, 13)
 
@@ -48,8 +50,8 @@ else:
         "Wizard": 1,
         "Paladin": 2,
         "Ranger": 2,
-        "Eldritch Knight": 3,
-        "Arcane Trickster": 3
+        "Fighter (Eldritch Knight)": 3,
+        "Rogue (Arcane Trickster)": 3
     }
 
     if ch.get_cvar("casting_classes"):
@@ -68,6 +70,9 @@ else:
     # If a server uses a sorcerer-only rule for spell points, then they can use casting_classes_override to enforce it.
     if get_svar("casting_classes_override"):
         casting_classes = load_json(get_svar("casting_classes_override"))
+        override_msg = N + "**SERVER CASTING_CLASSES OVERRIDE ACTIVE.**" + N + "Allowed classes: " + ", ".join(casting_classes.keys()) + "." + N + N
+    else:
+        override_msg = ""
 
     caster_level = 0
     my_levels = {}
@@ -85,7 +90,7 @@ else:
                     ch.levels.get(k[:-5]) / casting_classes[key]
                 )
     else:
-        return """embed -title "You haven't run `!level` yet!" -desc "This alias needs to fetch your subclass levels in order to calculate your spell points! To allow it to do so, please subscribe to **Verbose Character Tools** here: https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d and run `!level` at least once." """
+        return f"""embed -title "You haven't run `!level` yet!" -desc "This alias needs to fetch your subclass levels in order to calculate your spell points! To allow it to do so, please subscribe to **Verbose Character Tools** here: https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d and run `!level` at least once." -thumb "{CHARACTER_PIC}" -footer "{FOOTER_STRING}" """
 
     for k, v in my_levels.items():
         caster_level += v
@@ -96,7 +101,9 @@ else:
         reset="long"
     )
 
-    return f"""embed -title "New Counter 'Spell Points' Created." -desc "{new_counter.full_str(True) + N + N}Metamagic Adept Points Included: `{spcast_settings['include_metamagic_adept']}.`{N}Sorcery Points Included: `{spcast_settings['include_sorcery_points']}`.{N+N}If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spcast_settings` cvar to `True`." """
+    return f"""embed -title "New Counter 'Spell Points' Created For {name}." -desc "{override_msg}**Spellcaster Levels**{N + N.join([f'{i}: `{v}`' for i, v in my_levels.items()]) + N + N + new_counter.full_str(True) + N + N}Metamagic Adept Points Included: `{spcast_settings['include_metamagic_adept']}`.{N}Sorcery Points Included: `{spcast_settings['include_sorcery_points']}`.{N+N}If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spcast_settings` cvar to `True`.{N + N}Spell Points will automatically be created if they don't exist, or when using `!spcast POINTS` (POINTS must be in all caps)." -thumb "{CHARACTER_PIC}" -footer "{FOOTER_STRING}" """
+
+
 
 return "echo Pog"
 </drac2>
