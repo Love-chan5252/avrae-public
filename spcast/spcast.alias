@@ -9,7 +9,6 @@ parsed_args = argparse(args)
 ignore = parsed_args.get('i',
     default=False,
     type_=bool)
-
 ch = character()
 
 points = (0, 2, 3, 5, 6, 7, 9, 10, 11, 13)
@@ -24,6 +23,7 @@ else:
     # Finds what your spell point total should be.
     points_by_level = (0, 4, 6, 14, 17, 27, 32, 38, 44, 57, 64, 73, 73, 83, 83, 94, 94, 107, 114, 123, 133)
     
+    # Creates the settings if they don't exist, then loads them.
     ch.set_cvar_nx("spcast_settings", 
         dump_json(
             {
@@ -34,6 +34,9 @@ else:
     )
     spcast_settings = load_json(ch.get_cvar("spcast_settings"))
 
+    # Uses the settings to decide whether to add extra spell points.
+    # 2 extra spell points if metamagic adept points are included.
+    # Extra spell points equal to Sorcery Points if Sorcery Points are included.
     extra_points = 0
     if spcast_settings["include_metamagic_adept"]:
         extra_points += 2
@@ -41,7 +44,7 @@ else:
         if ch.levels.get("Sorcerer") >= 2:
             extra_points += SorcererLevel
 
-    # Stores the number of how many instances of a class/subclass equals one caster level. 
+    # Stores the number of how many instances of a class/subclass level equals one caster level.
     casting_classes = {
         "Bard": 1,
         "Cleric": 1,
@@ -54,6 +57,7 @@ else:
         "Rogue (Arcane Trickster)": 3
     }
 
+    # Adds in the homebrewed/extra casting classes if they exist.
     if ch.get_cvar("casting_classes"):
         casting_classes.update(
             load_json(ch.get_cvar("casting_classes"))
@@ -67,7 +71,7 @@ else:
             load_json(get_svar("casting_classes"))
         )
 
-    # If a server uses a sorcerer-only rule for spell points, then they can use casting_classes_override to enforce it.
+    # If a server has a casting_classes_override set, it replaces all other :casting_classes: settings.
     if get_svar("casting_classes_override"):
         casting_classes = load_json(get_svar("casting_classes_override"))
         override_msg = N + "**SERVER CASTING_CLASSES OVERRIDE ACTIVE.**" + N + "Allowed classes: " + ", ".join(casting_classes.keys()) + "." + N + N
@@ -103,7 +107,46 @@ else:
 
     return f"""embed -title "New Counter 'Spell Points' Created For {name}." -desc "{override_msg}**Spellcaster Levels**{N + N.join([f'{i}: `{v}`' for i, v in my_levels.items()]) + N + N + new_counter.full_str(True) + N + N}Metamagic Adept Points Included: `{spcast_settings['include_metamagic_adept']}`.{N}Sorcery Points Included: `{spcast_settings['include_sorcery_points']}`.{N+N}If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spcast_settings` cvar to `True`.{N + N}Spell Points will automatically be created if they don't exist, or when using `!spcast POINTS` (POINTS must be in all caps)." -thumb "{CHARACTER_PIC}" -footer "{FOOTER_STRING}" """
 
+# Errors if there are no arguments. Error mentions the help embed.
+if not args:
+    err("You didn't supply any arguments! Try `!spcast HELP` (in all caps) or `!spcast ?` for help on how to use this alias.")
 
+# Loads all of the spells.
+spells = load_json(
+    get_gvar("d56885c2-867f-4aba-80f0-f91fef63d38b")
+)
+
+# Loads all of the player-created spells.
+homebrew_gvars = (load_json(ch.get_cvar("brewspells", "[]"))
+                 + load_json(get_uvar("brewspells", "[]"))
+                 + load_json(get_svar("brewspells", "[]"))
+)
+
+for gvar in homebrew_gvars:
+    spells.extend(
+        load_json(get_gvar(gvar))
+    )
+
+spell = None
+
+for i in spells:
+    if args[0].lower() == i.name.lower():
+        spell = i
+        break
+
+if spell == None:
+    for i in spells:
+        if args[0].lower() in i.name.lower():
+            spell = i
+            break
+
+if not spell:
+    err(f"""The spell `{args[0]}` couldn't be found. Try spelling it correctly, or making sure it is in your `brewspells` cvar/uvar/svar.""")
+
+if not ignore and spell.name not in character().spellbook:
+    err(f"""You don't know that spell! Make sure it's in your spellbook, or try to cast it with `-i` to ignore Spell Point and spellbook requirements.""")
+
+spell_level = max()
 
 return "echo Pog"
 </drac2>
