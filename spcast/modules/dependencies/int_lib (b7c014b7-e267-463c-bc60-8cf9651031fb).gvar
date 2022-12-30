@@ -1,0 +1,130 @@
+# int_lib = 'b7c014b7-e267-463c-bc60-8cf9651031fb'
+#
+# A module to help with rounding and displaying integers.
+#
+# ===== Functions =====
+#
+# ordinal(number): Returns the ordinal ("1st", "2nd", "3rd" etc.) string
+#     representation of a number.
+#
+# round_to_multiple(number, step): Rounds a number to the nearest multiple
+#     of step.
+#
+# floor_to_multiple(number, step): Rounds a number DOWN to the nearest
+#     multiple of step.
+#
+# ceil_to_multiple(number, step): Rounds a number UP to the nearest
+#     multiple of step.
+#
+# english(number): Returns a textual (e.g. "twenty-three") representation
+#     of an integer.
+#
+# iterative(number): Returns a corresponding iterative numeral
+#     (e.g. "twice") for an integer.
+
+
+def ordinal(number):
+    """
+    Returns the ordinal ("1st", "2nd", "3rd" etc.) representation of an integer.
+    :arg int number: the integer.
+    :return: the ordinal for that integer.
+    :rtype: str
+    """
+    match abs(number) % 100:
+        case 1 | 21 | 31 | 41 | 51 | 61 | 71 | 81 | 91:
+            return f"{number:,}st"
+        case 2 | 22 | 32 | 42 | 52 | 62 | 72 | 82 | 92:
+            return f"{number:,}nd"
+        case 3 | 23 | 33 | 43 | 53 | 63 | 73 | 83 | 93:
+            return f"{number:,}rd"
+        case _:
+            return f"{number:,}th"
+
+
+def round_to_multiple(number, step):
+    """
+    Rounds a number to the nearest multiple of step.
+    The return type will be the same type as the step arg.
+    :arg int|float number: the number to round.
+    :arg int|float step: the type of multiple to round to.
+    :return: the number rounded to the nearest multiple of step.
+    :rtype: int|float
+    """
+    return round(number / step) * step
+
+
+def floor_to_multiple(number, step):
+    """
+    Rounds a number DOWN to the nearest multiple of step.
+    The return type will be the same type as the step arg.
+    :arg int|float number: the number to round.
+    :arg int|float step: the type of multiple to round to.
+    :return: the number rounded down to the nearest multiple of step.
+    :rtype: int|float
+    """
+    return floor(number / step) * step
+
+
+def ceil_to_multiple(number, step):
+    """
+    Rounds a number UP to the nearest multiple of step.
+    The return type will be the same type as the step arg.
+    :arg int|float number: the number to round.
+    :arg int|float step: the type of multiple to round to.
+    :return: the number rounded up to the nearest multiple of step.
+    :rtype: int|float
+    """
+    return ceil(number / step) * step
+
+
+_ENGLISH_NUMBERS = load_yaml(get_gvar('fa41ae1c-0bc2-4127-863c-0c642c018b8f'))
+_ENGLISH_BIG_NUMBERS = load_yaml(get_gvar('3083722a-a911-4f80-b5e1-6ea5abb917cb'))
+
+
+def english(number):
+    """
+    Returns a textual (e.g. "twenty-three") representation of an integer.
+    :arg int number: the integer.
+    :return: the textual representation of the integer.
+    :rtype: str
+    """
+    out = []
+    sign = 'minus ' if number < 0 else ''
+    unprocessed = abs(number)
+    if unprocessed > 999_999_999_999_999_999_999_999_999_999_999_999_999_999_999_999_999_999_999_999_999:
+        return sign + 'a REALLY big number'
+    for big_number in _ENGLISH_BIG_NUMBERS:
+        if unprocessed:
+            hundreds = (unprocessed % 1000) // 100
+            tens_and_units = unprocessed % 100
+            unprocessed //= 1000
+            if tens_and_units:
+                if hundreds:
+                    out.insert(0, f'{_ENGLISH_NUMBERS[hundreds]} hundred and {_ENGLISH_NUMBERS[tens_and_units]}{big_number}')
+                elif big_number:
+                    out.insert(0, f'{_ENGLISH_NUMBERS[tens_and_units]}{big_number}')
+                else:
+                    out.insert(0, f'and {_ENGLISH_NUMBERS[tens_and_units]}')
+            elif hundreds:
+                out.insert(0, f'{_ENGLISH_NUMBERS[hundreds]} hundred{big_number}')
+        else:
+            break
+    if out and out[0].startswith('and '):
+        out[0] = out[0][4:]
+    return sign + (', '.join(out) or 'zero')
+
+
+def iterative(number):
+    """
+    Returns a corresponding iterative numeral (e.g. "twice") for an integer.
+    :arg int number: the integer.
+    :return: the iterative numeral of the integer.
+    :rtype: str
+    """
+    match number:
+        case 1:
+            return "once"
+        case 2:
+            return "twice"
+        case _:
+            return english(number) + " times"

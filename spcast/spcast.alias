@@ -11,8 +11,6 @@ ignore = parsed_args.get('i',
     type_=bool)
 ch = character()
 
-points = (0, 2, 3, 5, 6, 7, 9, 10, 11, 13)
-
 # If no spell points exist yet, creates a counter and returns an embed
 # detailing the new spell point total.
 # Will also return this embed if using !spcast POINTS
@@ -146,7 +144,26 @@ if not spell:
 if not ignore and spell.name not in character().spellbook:
     err(f"""You don't know that spell! Make sure it's in your spellbook, or try to cast it with `-i` to ignore Spell Point and spellbook requirements.""")
 
-spell_level = max()
+spell_level = max(
+    parsed_args.last('l',
+        default=0,
+        type_=int),
+    spell.level
+)
+
+casting_points = (0, 2, 3, 5, 6, 7, 9, 10, 11, 13)
+
+points = casting_points[spell_level]
+
+if (extra_points := parsed_args.last("p")):
+    try:
+        points += int(extra_points)
+    except:
+        err(f"""`-p {extra_points}` was not a valid input for `-p`. Input must be a whole number. No spell points were expended.""")
+
+if not ignore and spell_points < points:
+    return f"""embed -title "{name} doesn't have enough Spell Points to cast {spell.name}!" -desc "`{spell.name}` is a {spell.level}" -thumb "{CHARACTER_PIC}" -footer "{FOOTER_STRING}" """
+
 
 return "echo Pog"
 </drac2>
