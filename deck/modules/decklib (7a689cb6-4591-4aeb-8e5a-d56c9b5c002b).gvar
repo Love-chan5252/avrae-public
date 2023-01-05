@@ -161,6 +161,7 @@ if not use_shared_deck:
     else:
         deckload = default_deckload()
         _char.set_cvar(
+            "deckload",
             dump_yaml(deckload)
         )
 
