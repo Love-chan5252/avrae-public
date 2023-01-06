@@ -2,7 +2,7 @@
 args = &ARGS&
 N,ZERO_SPACE,TRIPLE_BACK_TICKS = "\n","\u200c","`"+"`"+"`"
 VARNAME = "custom_decks"
-FOOTER_STRING = "!deck | v1.2.0 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = "!deck | v1.2.1 | Lovingly made by @""Love-chan#5252"
 
 c = combat()
 character_pic = image
@@ -387,7 +387,7 @@ if "init" == args[0] or "i" == args[0]:
                 else:
                     decklib.set_list(decklib.exhaustpile, load_json(combat_exhaustpile))
 
-                c.set_metadata(combat_hand_name, dump_json(decklib.cardhand))
+                c.set_metadata(decklib.combat_hand_name, dump_json(decklib.cardhand))
                 handlen = len(decklib.cardhand)
                 if handlen > 0:
                     cheatmsg = f" Carried over {handlen} " + ("cards." if handlen != 1 else "card.")

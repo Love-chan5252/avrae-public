@@ -159,11 +159,11 @@ if not use_shared_deck:
     # If no deckload cvar exists, creates :deckload: using the first option in
     # :DEFAULT_DECKS:, then saves it.
     else:
-        deckload = default_deckload()
         _char.set_cvar(
             "deckload",
-            dump_yaml(deckload)
+            dump_yaml(default_deckload())
         )
+        deckload = default_deckload()
 
 # Gets :deckload: from the shared initiative settings.
 else:
