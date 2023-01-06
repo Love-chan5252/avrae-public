@@ -11,6 +11,8 @@ ignore = parsed_args.get('i',
     type_=bool)
 ch = character()
 
+get_functions = [ch.get_cvar, get_uvar, get_svar]
+
 # If no spell points exist yet, creates a counter and returns an embed
 # detailing the new spell point total.
 # Will also return this embed if using !spcast POINTS
@@ -18,7 +20,7 @@ if ch.cc_exists(CCNAME) and not "POINTS" in args:
     spell_points = ch.get_cc(CCNAME)
 
 else:
-    # Finds what your spell point total should be.
+    # How many spell points a character should have based on their caster levels.
     points_by_level = (0, 4, 6, 14, 17, 27, 32, 38, 44, 57, 64, 73, 73, 83, 83, 94, 94, 107, 114, 123, 133)
     
     # Creates the settings if they don't exist, then loads them.
@@ -56,17 +58,11 @@ else:
     }
 
     # Adds in the homebrewed/extra casting classes if they exist.
-    if ch.get_cvar("casting_classes"):
+    for getvar in get_functions:
         casting_classes.update(
-            load_json(ch.get_cvar("casting_classes"))
-        )
-    if uvar_exists("casting_classes"):
-        casting_classes.update(
-            load_json(get_uvar("casting_classes"))
-        )
-    if get_svar("casting_classes"):
-        casting_classes.update(
-            load_json(get_svar("casting_classes"))
+            load_json(
+                getvar("casting_classes", "{}")
+            )
         )
 
     # If a server has a casting_classes_override set, it replaces all other :casting_classes: settings.
@@ -96,6 +92,11 @@ else:
 
     for k, v in my_levels.items():
         caster_level += v
+    
+    caster_level = min(
+        caster_level,
+        20
+    )
 
     new_counter = ch.create_cc("Spell Points",
         minVal="0",
@@ -109,17 +110,20 @@ else:
 if not args:
     err("You didn't supply any arguments! Try `!spcast HELP` (in all caps) or `!spcast ?` for help on how to use this alias.")
 
-# Loads all of the spells.
+# Loads the default list of all of the spells.
+# A spell is a dictionary.
 spells = load_json(
     get_gvar("d56885c2-867f-4aba-80f0-f91fef63d38b")
 )
 
 # Loads all of the player-created spells.
-homebrew_gvars = (load_json(ch.get_cvar("brewspells", "[]"))
-                 + load_json(get_uvar("brewspells", "[]"))
-                 + load_json(get_svar("brewspells", "[]"))
-)
+homebrew_gvars = []
+for func in get_functions:
+    homebrew_gvars += load_json(
+        func("brewspells", "[]")
+    )
 
+# Add the homebrewed spells into the dict :spells:.
 for gvar in homebrew_gvars:
     spells.extend(
         load_json(get_gvar(gvar))
@@ -127,30 +131,44 @@ for gvar in homebrew_gvars:
 
 spell = None
 
+# Runs first to check for exact matches.
+# Checking for exact matches first is necessary in the cases of spells
+# like "heal" because other spells such as "healing word" contain its 
+# full name.
 for i in spells:
     if args[0].lower() == i.name.lower():
         spell = i
         break
 
+# Runs second to check for partial matches.
 if spell == None:
     for i in spells:
         if args[0].lower() in i.name.lower():
             spell = i
             break
 
+# Error if no match found.
 if not spell:
     err(f"""The spell `{args[0]}` couldn't be found. Try spelling it correctly, or making sure it is in your `brewspells` cvar/uvar/svar.""")
 
+# Error if spell not in spellbook.
+# Won't error if `-i` is provided.
 if not ignore and spell.name not in character().spellbook:
     err(f"""You don't know that spell! Make sure it's in your spellbook, or try to cast it with `-i` to ignore Spell Point and spellbook requirements.""")
 
-spell_level = max(
-    parsed_args.last('l',
-        default=0,
-        type_=int),
+spell_level = min(
+    9,
+    max(
+        parsed_args.last(
+            'l',
+            default=0,
+            type_=int
+        ),
     spell.level
+    )
 )
 
+# The amount of spell points to expend at certain spell levels, up to 9th.
 casting_points = (0, 2, 3, 5, 6, 7, 9, 10, 11, 13)
 
 points = casting_points[spell_level]
@@ -164,6 +182,8 @@ if (extra_points := parsed_args.last("p")):
 if not ignore and spell_points < points:
     return f"""embed -title "{name} doesn't have enough Spell Points to cast {spell.name}!" -desc "`{spell.name}` is a {spell.level}" -thumb "{CHARACTER_PIC}" -footer "{FOOTER_STRING}" """
 
+# Slices the string of arguments after the alias to exclude the provided name of the spell.
+argument_string = " ".join(["＂" + i + "＂" for i in args[1:]])
 
-return "echo Pog"
+return f"""cast ＂{spell.name}＂ {argument_string} -i"""
 </drac2>
