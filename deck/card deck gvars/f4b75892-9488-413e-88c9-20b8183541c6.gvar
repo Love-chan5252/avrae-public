@@ -2,10 +2,8 @@
     "DefaultSimpleCards":{
         "Two of Spades":{
             "name":":two::spades: Two of Spades",
-            "Deck v1.2.1 changelog":".",
-            "1":"Fixed critical cvar-saving error for new users",
-            "2":"Patched a default deckload loading TypeError",
-            "3":"Fixed !deck init join error arising from lack of decklib referral"
+            "Deck v1.2.2 changelog":".",
+            "1":"Fixed yet another decklib porting error"
         },
         "Three of Spades":{
             "name":":three::spades: Three of Spades"
