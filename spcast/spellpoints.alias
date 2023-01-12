@@ -8,91 +8,92 @@ args = &ARGS&
 parsed_args = argparse(args)
 ch = character()
 
-get_functions = [ch.get_cvar, get_uvar, get_svar]
-
-# How many spell points a character should have based on their caster levels.
-points_by_level = (0, 4, 6, 14, 17, 27, 32, 38, 44, 57, 64, 73, 73, 83, 83, 94, 94, 107, 114, 123, 133)
-
-# Creates the settings if they don't exist, then loads them.
-ch.set_cvar_nx("spcast_settings", 
-    dump_json(
-        {
-            "include_metamagic_adept": False,
-            "include_sorcery_points": False
-        }
-    )
+using(
+    json="c0a7533c-6376-41e9-8c03-18f7742668e5"
 )
-spcast_settings = load_json(ch.get_cvar("spcast_settings"))
-
-# Uses the settings to decide whether to add extra spell points.
-# 2 extra spell points if metamagic adept points are included.
-# Extra spell points equal to Sorcery Points if Sorcery Points are included.
-extra_points = 0
-if spcast_settings["include_metamagic_adept"]:
-    extra_points += 2
-if spcast_settings["include_sorcery_points"]:
-    if ch.levels.get("Sorcerer") >= 2:
-        extra_points += SorcererLevel
 
 # Stores the number of how many instances of a class/subclass level equals one caster level.
-casting_classes = {
-    "Bard": 1,
-    "Cleric": 1,
-    "Druid": 1,
-    "Sorcerer": 1,
-    "Wizard": 1,
-    "Paladin": 2,
-    "Ranger": 2,
-    "Fighter (Eldritch Knight)": 3,
-    "Rogue (Arcane Trickster)": 3
-}
+casting_classes = load_json(
+    get_gvar("344f4ff2-f3f2-47b1-ab3d-9cc03199b9d7")
+)
 
-# Adds in the homebrewed/extra casting classes if they exist.
-for getvar in get_functions:
-    casting_classes.update(
-        load_json(
-            getvar("casting_classes", "{}")
+if not args or "help" in args or "?" in args:
+    return f"""embed -title ＂{name} needs some help with their Spell Points!＂ -desc ＂If you want to **__create a Spell Points counter;__** run `!spellpoints create`. Class levels and subclass levels created with `!level` will be used to calculate Spell Points.{N}*Note: if you have not run `!level` yet from Verbose Character Tools, please subscribe to it here and run it at least once. If you have a subclass such as Eldritch Knight or Arcane Trickster, please use `!level <class> <subclass>` so they can be detected by this alias.*{N}**Verbose Character Tools:** https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d{N+N}Use `!spellpoints help` to **__see THIS help embed.__ (The one you are currently reading).**{N+N}To add **__homebrew spellcasting classes;__** you'll need to create a gvar formatted as a JSON which includes the name of the class, and the number of class levels in that class which equate to one full caster level. (e.g., `"Paladin": 2`, `"Wizard": 1`, etc.){N}For homebrew subclasses, use the name of the class followed by the name of the subclass in parenthesis. This __assumes that the subclass has been set up with `!level` data.__ For example: `"Fighter (Eldritch Knight)": 3` or `"Rogue (Arcane Trickster)": 3`{N+N}**Here is an Example for Recreating the Alias' Default `casting_classes` Information, Plus a Placeholder Full-Caster Class:**{'`' * 3}json{N}!gvar create {json.format_json(casting_classes) + '`'*3}Avrae will then spit out a gvar address. Copy that address and use it to create a `casting_classes` **uvar**, or **cvar** variable formatted as a list, i.e. `!uvar shapeshifter_races ["344f4ff2-f3f2-47b1-ab3d-9cc03199b9d7"]`. You can also create a server variable (**svar**) if you want to share your homebrew with others. Multiple gvar addresses can be added to that list. When you're finished, you'll be ready to use `!spellpoints`!{N+N}If you are a server owner who would like to **__override casting_classes settings;__** create an **svar** called `casting_classes_override` in the same format as one of the **gvars** inside of `casting_classes`. When you set an override, no other class levels will be recognized on your server when calculating spell points.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+
+if "create" in args[0].lower():
+    get_functions = [ch.get_cvar, get_uvar, get_svar]
+
+    # How many Spell Points a character should have based on their caster levels.
+    points_by_level = (0, 4, 6, 14, 17, 27, 32, 38, 44, 57, 64, 73, 73, 83, 83, 94, 94, 107, 114, 123, 133)
+
+    # Creates the settings if they don't exist, then loads them.
+    ch.set_cvar_nx("spellpoint_settings", 
+        dump_json(
+            {
+                "include_metamagic_adept": False,
+                "include_sorcery_points": False
+            }
         )
     )
+    spcast_settings = load_json(ch.get_cvar("spcast_settings"))
 
-# If a server has a casting_classes_override set, it replaces all other :casting_classes: settings.
-if get_svar("casting_classes_override"):
-    casting_classes = load_json(get_svar("casting_classes_override"))
-    override_msg = N + "**SERVER CASTING_CLASSES OVERRIDE ACTIVE.**" + N + "Allowed classes: " + ", ".join(casting_classes.keys()) + "." + N + N
-else:
-    override_msg = ""
+    # Uses the settings to decide whether to add extra Spell Points.
+    # 2 extra Spell Points if metamagic adept points are included.
+    # Extra Spell Points equal to Sorcery Points if Sorcery Points are included.
+    extra_points = 0
+    if spcast_settings["include_metamagic_adept"]:
+        extra_points += 2
+    if spcast_settings["include_sorcery_points"]:
+        if ch.levels.get("Sorcerer") >= 2:
+            extra_points += SorcererLevel
 
-caster_level = 0
-my_levels = {}
 
-for class_, lvl in ch.levels:
-    if class_ in casting_classes:
-        my_levels[class_] = floor(
-            lvl / casting_classes[class_]
-        )        
-
-if (subclass := ch.get_cvar("subclass")):
-    for k, v in load_json(subclass).items():
-        if (key := k[:-5] + " (" + v + ")") in casting_classes:
-            my_levels[key] = floor(
-                ch.levels.get(k[:-5]) / casting_classes[key]
+    # Adds in the homebrewed/extra casting classes if they exist.
+    for getvar in get_functions:
+        casting_classes.update(
+            load_json(
+                getvar("casting_classes", "{}")
             )
-else:
-    return f"""embed -title ＂You haven't run `!level` yet!＂ -desc ＂This alias needs to fetch your subclass levels in order to calculate your spell points! To allow it to do so, please subscribe to **Verbose Character Tools** here: https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d and run `!level` at least once.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+        )
 
-for k, v in my_levels.items():
-    caster_level += v
+    # If a server has a casting_classes_override set, it replaces all other :casting_classes: settings.
+    if get_svar("casting_classes_override"):
+        casting_classes = load_json(get_svar("casting_classes_override"))
+        override_msg = N + "**SERVER CASTING_CLASSES OVERRIDE ACTIVE.**" + N + "Allowed classes: " + ", ".join(casting_classes.keys()) + "." + N + N
+    else:
+        override_msg = ""
 
-caster_level = min(
-    caster_level,
-    20
-)
+    caster_level = 0
+    my_levels = {}
 
-new_counter = ch.create_cc("Spell Points",
-    minVal="0",
-    maxVal=f"{points_by_level[caster_level] + extra_points}",
-    reset="long"
-)
+    for class_, lvl in ch.levels:
+        if class_ in casting_classes:
+            my_levels[class_] = floor(
+                lvl / casting_classes[class_]
+            )        
 
-return f"""embed -title ＂New Counter 'Spell Points' Created For {name}.＂ -desc ＂{override_msg + new_counter.full_str(True) + N + N}**Spellcaster Levels**{N + N.join([f'{i}: `{v}`' for i, v in my_levels.items()]) + N + N}**Spell Point Settings**{N}Metamagic Adept Points Included: `{spcast_settings['include_metamagic_adept']}`{N}Sorcery Points Included: `{spcast_settings['include_sorcery_points']}`{N + N}If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spcast_settings` cvar to `True`.{N + N}Spell Points will automatically be created if they don't exist, or when using `!spcast POINTS` (POINTS must be in all caps).＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+    if (subclass := ch.get_cvar("subclass")):
+        for k, v in load_json(subclass).items():
+            if (key := k[:-5] + " (" + v + ")") in casting_classes:
+                my_levels[key] = floor(
+                    ch.levels.get(k[:-5]) / casting_classes[key]
+                )
+    else:
+        return f"""embed -title ＂You haven't run `!level` yet!＂ -desc ＂This alias needs to fetch your subclass levels in order to calculate your Spell Points! To allow it to do so, please subscribe to **Verbose Character Tools** here: https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d and run `!level` at least once.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+
+    for k, v in my_levels.items():
+        caster_level += v
+
+    caster_level = min(
+        caster_level,
+        20
+    )
+
+    new_counter = ch.create_cc("Spell Points",
+        minVal="0",
+        maxVal=f"{points_by_level[caster_level] + extra_points}",
+        reset="long"
+    )
+
+    return f"""embed -title ＂New Counter 'Spell Points' Created For {name}.＂ -desc ＂{override_msg + new_counter.full_str(True) + N + N}**Spellcaster Levels**{N + N.join([f'{i}: `{v}`' for i, v in my_levels.items()]) + N + N}**Spell Point Settings**{N}Metamagic Adept Points Included: `{spcast_settings['include_metamagic_adept']}`{N}Sorcery Points Included: `{spcast_settings['include_sorcery_points']}`{N + N}If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spcast_settings` cvar to `True`.{N + N}Want to add homebrewed casting classes, or manage which classes do and don't count? See `!spellpoints help` for more!＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
 </drac2>
