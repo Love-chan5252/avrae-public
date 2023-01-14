@@ -8,9 +8,6 @@ args = &ARGS&
 parsed_args = argparse(args)
 ch = character()
 
-using(
-    json="c0a7533c-6376-41e9-8c03-18f7742668e5"
-)
 
 # Stores the number of how many instances of a class/subclass level equals one caster level.
 casting_classes = load_json(
@@ -18,6 +15,7 @@ casting_classes = load_json(
 )
 
 if not args or "help" in args or "?" in args:
+    using(json="c0a7533c-6376-41e9-8c03-18f7742668e5")
     return f"""embed -title ＂{name} needs some help with their Spell Points!＂ -desc ＂If you want to **__create a Spell Points counter;__** run `!spellpoints create`. Class levels and subclass levels created with `!level` will be used to calculate Spell Points.{N}*Note: if you have not run `!level` yet from [Verbose Character Tools](https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d), please subscribe to it here and run it at least once. If you have a subclass such as Eldritch Knight or Arcane Trickster, please use `!level <class> <subclass>` so they can be detected by this alias.*{N+N}Use `!spellpoints help` to **__see THIS help embed.__ (The one you are currently reading).**{N+N}To add **__homebrew spellcasting classes;__** you'll need to create a gvar formatted as a JSON which includes the name of the class, and the number of class levels in that class which equate to one full caster level. (e.g., `"Paladin": 2`, `"Wizard": 1`, etc.){N}For homebrew subclasses, use the name of the class followed by the name of the subclass in parenthesis. This __assumes that the subclass has been set up with `!level` data.__ For example: `"Fighter (Eldritch Knight)": 3` or `"Rogue (Arcane Trickster)": 3`{N+N}**Here is an Example for Recreating the Alias' Default `casting_classes` Information, Plus a Placeholder Full-Caster Class:**{'`' * 3}json{N}!gvar create {json.format_json(casting_classes) + '`'*3}Avrae will then spit out a gvar address. Copy that address and use it to create a `casting_classes` **uvar**, or **cvar** variable formatted as a list, i.e. `!uvar shapeshifter_races ["344f4ff2-f3f2-47b1-ab3d-9cc03199b9d7"]`. You can also create a server variable (**svar**) if you want to share your homebrew with others. Multiple gvar addresses can be added to that list. When you're finished, you'll be ready to use `!spellpoints`!{N+N}If you are a server owner who would like to **__override casting_classes settings;__** create an **svar** called `casting_classes_override` in the same format as one of the **gvars** inside of `casting_classes`. When you set an override, no other class levels will be recognized on your server when calculating spell points.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
 
 if "create" in args[0].lower():
