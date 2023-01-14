@@ -17,14 +17,15 @@ get_functions = [ch.get_cvar, get_uvar, get_svar]
 # detailing the new spell point total.
 # Will also return this embed if using !spcast POINTS
 if ch.cc_exists(CCNAME):
-    spell_points = ch.get_cc(CCNAME)
+    cc = ch.get_cc(CCNAME)
 else:
     err("**No Spell Points Counter Exists!!** Please manually create one or use `!spellpoints create` to create a counter! Using the alias is highly recommended!")
 
 # Errors if there are no arguments. Error mentions the help embed.
 if not args:
-    err("You didn't supply any arguments! Try `!spcast HELP` (in all caps) or `!spcast ?` for help on how to use this alias.")
-    return f"""embed -title ＂{name} needs help using the `!spcast` alias!＂ -desc ＂＂ """
+    example = [{"name": "Love-chan's Eminent Example", "level": 9}, {"name": "Instructionate", "level": 0}]
+    using(json="c0a7533c-6376-41e9-8c03-18f7742668e5")
+    return f"""embed -title ＂{name} needs help using the `!spcast` alias!＂ -desc ＂Use `!spcast "spell name"` to cast a spell using Spell Points instead of Spell Slots! Casting a spell with Spell Points requires:{N + N}- A custom counter (cc) named "Spell Points" (which can be created with `!spellpoints create`).{N}- The spell you are trying to cast being in your spell book.{N + N}This alias runs on the `!cast` command. It will accept all arguments detailed in `!help cast`, and all **snippets** accepted by `!cast`.{N + N}You can use  `-i` to ignore all requirements for casting the spell.{N + N}You can use `-p #` to modify the sorcery point cost by `#` without changing the level of the spell.{N + N}You can expend Spell Points to use **Metamagic** by typing the name of the Metamagic you are trying to use, or one of the designated shortened names.{N + N}- **Careful Spell:** `careful` | `caspell` | `cas`{N}- **Distant Spell: **`distant` | `dispell` | `dis`{N}- **Empowered Spell:** `empowered` | `emspell` | `ems` (*rerolls must be done manually*){N}- **Extended Spell:** `extended` | `exspell` | `exs` (*duration must be modified manually*){N}- **Heightened Spell:** `heightened` | `hespell` | `hes` (*selected disadvantage must be added manually*){N}- **Quickened Spell:** `quickened` | `quspell` | `qus`{N}- **Subtle Spell:** `subtle` | `suspell` | `sus`{N}- **Twinned Spell:** `twinned` | `twspell` | `tws` (*automatically detects spell level*){N}- **Seeking Spell:** `seeking` | `sespell` | `ses` (*rerolls must be done manually*){N}- **Transmuted Spell:** `transmuted` | `trspell` | `trs` (*must supply `-dtype "[X]"` manually*){N + N}*Example: `!spcast "Sacred Flame" twspell -t Bad1 -t Bad2`*{N + N}Metamagic with Spell Points consumes the same number of Spell Points as it would otherwise consume Sorcery Points. If using `-i`, Metamagic will not consume any spell points. Spell Point metamagic snippets will never automatically cancel each other out or prevent you from using more at once.{N + N}This alias will also keep track of which levels of spells you're allowed to cast, and how many high-level spells you're allowed to cast per day based on your level. You can modify these thresholds by editing your `spcast_settings` cvar; or if you're a server owner trying to enforce homebrew rules, the `spcast_override` svar instead.{N + N}**Adding Homebrew Spells**{N}To cast homebrewed spells, they'll first need to be in a tome on the [Avrae Dashboard](https://avrae.io/dashboard/homebrew/spells). Without automation on the Dashboard, they cannot be cast by any means. {N + N}You'll need to create a gvar formatted as a JSON which includes the names and levels of the homebrewed spells. Each spell itself should be a dict, and all of the spells should be part of a list. We do it in this format in order to make it possible to *export the tome from the Avrae dashboard as a JSON, and use the copied text inside the new gvar.* You can then remove everything except name and level to make it cleaner.{N + N}**Here is an Example for Creating Two Custom Homebrew Spells. One of 9th Level, and One Cantrip:**{N + '`'*3}json{N}!gvar create {json.format_json(example)}{'`'*3} Avrae will then spit out a gvar address. Copy that address and use it to create a user variable **uvar (recommended)** or character variable (**cvar**) called `brewspells`, formatted as a list, i.e. `!uvar brewspells ["91a5ccb0-8ac6-405f-9057-6c1bc2d80e86"]`. You can also create a server variable (**svar**) if you want to share your homebrew with others. Multiple gvar addresses can be added to that list. When you're finished, you'll be ready to use homebrew spells with `!spcast`!＂ -footer ＂{FOOTER_STRING}＂ """
 
 # Loads the default list of all of the spells.
 # A spell is a dictionary.
@@ -93,13 +94,21 @@ if (extra_points := parsed_args.last("p")):
     try:
         points += int(extra_points)
     except:
-        err(f"""`-p {extra_points}` was not a valid input for `-p`. Input must be a whole number. No spell points were expended.""")
+        err(f"""`-p {extra_points}` was not a valid input for `-p`. Input must be a whole number. No Spell Points were expended.""")
 
-if not ignore and spell_points < points:
-    return f"""embed -title "{name} doesn't have enough Spell Points to cast {spell.name}!" -desc "`{spell.name}` is a {spell.level}" -thumb "{CHARACTER_PIC}" -footer "{FOOTER_STRING}" """
+if not ignore and cc < points:
+    using(int_lib='b7c014b7-e267-463c-bc60-8cf9651031fb')
+    err(f"""{name} doesn't have enough Spell Points to cast {spell.name} like this! {spell.name} is {int_lib.ordinal(spell.level)}-level, and you tried casting it at {int_lib.ordinal(spell_level)}-level. No Spell Points were expended. Try using `-i` to ignore requirements or taking a long rest.""")
+
+if not ignore:
+    ch.mod_cc(CCNAME, -points)
+else:
+    points = 0
+
+point_str = f""" ＂-f＂ ＂{CCNAME} (-{points})|{ch.cc_str(CCNAME)}＂ """
 
 # Slices the string of arguments after the alias to exclude the provided name of the spell.
 argument_string = " ".join(["＂" + i + "＂" for i in args[1:]])
 
-return f"""cast ＂{spell.name}＂ {argument_string} -i"""
+return f"""cast ＂{spell.name}＂ {point_str} {argument_string} -i"""
 </drac2>
