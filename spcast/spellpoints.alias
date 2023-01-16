@@ -33,15 +33,15 @@ if "create" in args[0].lower():
             }
         )
     )
-    spcast_settings = load_json(ch.get_cvar("spcast_settings"))
+    spellpoint_settings = load_json(ch.get_cvar("spellpoint_settings"))
 
     # Uses the settings to decide whether to add extra Spell Points.
     # 2 extra Spell Points if metamagic adept points are included.
     # Extra Spell Points equal to Sorcery Points if Sorcery Points are included.
     extra_points = 0
-    if spcast_settings["include_metamagic_adept"]:
+    if spellpoint_settings["include_metamagic_adept"]:
         extra_points += 2
-    if spcast_settings["include_sorcery_points"]:
+    if spellpoint_settings["include_sorcery_points"]:
         if ch.levels.get("Sorcerer") >= 2:
             extra_points += SorcererLevel
 
@@ -66,24 +66,24 @@ if "create" in args[0].lower():
 
     for class_, lvl in ch.levels:
         if class_ in casting_classes:
-            my_levels[class_] = floor(
-                lvl / casting_classes[class_]
-            )        
+            my_levels[class_] = lvl / casting_classes[class_]
 
     if (subclass := ch.get_cvar("subclass")):
         for k, v in load_json(subclass).items():
             if (key := k[:-5] + " (" + v + ")") in casting_classes:
-                my_levels[key] = floor(
-                    ch.levels.get(k[:-5]) / casting_classes[key]
-                )
+                my_levels[key] = ch.levels.get(k[:-5]) / casting_classes[key]
     else:
-        return f"""embed -title ＂You haven't run `!level` yet!＂ -desc ＂This alias needs to fetch your subclass levels in order to calculate your Spell Points! To allow it to do so, please subscribe to **Verbose Character Tools** here: https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d and run `!level` at least once.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+        return f"""embed -title ＂You haven't set up their `!level` yet!＂ -desc ＂This alias needs to fetch your subclass levels in order to calculate your Spell Points! To allow it to do so, please subscribe to **[Verbose Character Tools](https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d)** and run `!level <class> <subclass>`. See `!level help` for further instructions.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
 
+    new_levels = {}
     for k, v in my_levels.items():
         caster_level += v
+        new_levels.update({k:round(v, 2)})
+    
+    my_levels = new_levels
 
     caster_level = min(
-        caster_level,
+        floor(caster_level),
         20
     )
 
@@ -93,5 +93,5 @@ if "create" in args[0].lower():
         reset="long"
     )
 
-    return f"""embed -title ＂New Counter 'Spell Points' Created For {name}.＂ -desc ＂{override_msg + new_counter.full_str(True) + N + N}**Spellcaster Levels**{N + N.join([f'{i}: `{v}`' for i, v in my_levels.items()]) + N + N}**Spell Point Settings**{N}Metamagic Adept Points Included: `{spcast_settings['include_metamagic_adept']}`{N}Sorcery Points Included: `{spcast_settings['include_sorcery_points']}`{N + N}If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spcast_settings` cvar to `True`.{N + N}Want to add homebrewed casting classes, or manage which classes do and don't count? See `!spellpoints help` for more!＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+    return f"""embed -title ＂New Counter 'Spell Points' Created For {name}.＂ -desc ＂{override_msg + new_counter.full_str(True) + N + N}**Spellcaster Levels**{N + N.join([f'{i}: `{v}`' for i, v in my_levels.items()]) + N + N}**Spell Point Settings**{N}Metamagic Adept Points Included: `{spellpoint_settings['include_metamagic_adept']}`{N}Sorcery Points Included: `{spellpoint_settings['include_sorcery_points']}`{N + N}If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spellpoint_settings` cvar to `True`.{N + N}Want to add homebrewed casting classes, or manage which classes do and don't count? See `!spellpoints help` for more!＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
 </drac2>

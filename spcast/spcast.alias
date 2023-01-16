@@ -5,7 +5,7 @@ FOOTER_STRING = "!spcast | v1.0.0 | Lovingly made by @""Love-chan#5252"
 CHARACTER_PIC = image
 
 args = &ARGS&
-parsed_args = argparse(args)
+parsed_args = argparse(args, parse_ephem=False)
 ignore = parsed_args.get('i',
     default=False,
     type_=bool)
@@ -52,16 +52,20 @@ spell = None
 # Checking for exact matches first is necessary in the cases of spells
 # like "heal" because other spells such as "healing word" contain its 
 # full name.
+input_ = args[0].lower()
+
 for i in spells:
-    if args[0].lower() == i.name.lower():
+    if input_ == i.name.lower():
         spell = i
+        parsed_args.ignore(input_)
         break
 
 # Runs second to check for partial matches.
 if spell == None:
     for i in spells:
-        if args[0].lower() in i.name.lower():
+        if input_ in i.name.lower():
             spell = i
+            parsed_args.ignore(input_)
             break
 
 # Error if no match found.
@@ -73,6 +77,7 @@ if not spell:
 if not ignore and spell.name not in character().spellbook:
     err(f"""You don't know that spell! Make sure it's in your spellbook, or try to cast it with `-i` to ignore Spell Point and spellbook requirements.""")
 
+# Controls the level of the spell so it won't error with an invalid casting level.
 spell_level = min(
     9,
     max(
@@ -81,34 +86,122 @@ spell_level = min(
             default=0,
             type_=int
         ),
-    spell.level
+        spell.level
     )
 )
+
+parsed_args.update({"l":f"{spell_level}"})
 
 # The amount of spell points to expend at certain spell levels, up to 9th.
 casting_points = (0, 2, 3, 5, 6, 7, 9, 10, 11, 13)
 
+# Uses the spell level to determine how many points to expend.
 points = casting_points[spell_level]
 
+# Uses `-p #` to expend extra spell points.
 if (extra_points := parsed_args.last("p")):
     try:
         points += int(extra_points)
     except:
-        err(f"""`-p {extra_points}` was not a valid input for `-p`. Input must be a whole number. No Spell Points were expended.""")
+        err(f"""`-p {extra_points}` was not a valid input for `-p`. Input must be a positive or negative whole number. No Spell Points were expended.""")
 
+# Expends extra Spell Points based on inputted metamagic keywords, then removes them from args so no snippets with those names are run.
+metamagic_indexes = []
+metamagic_field_str = ""
+
+# Temporarily storing :points: inside a mutable so it can be edited from within a function.
+points = [points]
+
+def cost(default: int):
+    if ignore:
+        return 0
+    else:
+        points[0] += default
+        return default
+
+def get_mod(stat):
+    mod = ch.stats.get_mod(stat)
+    if mod > -1:
+        return f"+{mod}"
+    else:
+        return str(mod)
+
+for i in args[1:]:
+    match i.lower():    
+        case "careful" | "caspell" | "cas":
+            meta_points = cost(1)
+            metamagic_field_str += f"""＂-f＂ ＂Careful Spell (-{meta_points})|When you cast a spell that forces other creatures to make a saving throw, you can protect some of those creatures from the spell's full force. To do so, you spend 1 sorcery point and choose a number of those creatures up to your Charisma modifier (**{get_mod("cha")}**) (minimum of one creature). A chosen creature automatically succeeds on its saving throw against the spell.＂ """
+            parsed_args.ignore(i)
+
+        case "distant" | "dispell" | "dis":
+            meta_points = cost(1)
+            metamagic_field_str += f"""＂-f＂ ＂Distant Spell (-{meta_points})|When you cast a spell that has a range of 5 feet or greater, you can spend 1 sorcery point to double the range of the spell.{N + N}When you cast a spell that has a range of touch, you can spend 1 sorcery point to make the range of the spell 30 feet.＂ """
+            parsed_args.ignore(i)
+
+        case "empowered" | "emspell" | "ems":
+            meta_points = cost(1)
+            metamagic_field_str += f"""＂-f＂ ＂Empowered Spell (-{meta_points})|When you roll damage for a spell, you can spend 1 sorcery point to reroll a number of the damage dice up to your Charisma modifier (**{get_mod("cha")}**) (minimum of one). You must use the new rolls.{N + N}You can use Empowered Spell even if you have already used a different Metamagic option during the casting of the spell.＂ """
+            parsed_args.ignore(i)
+
+        case "extended" | "exspell" | "exs":
+            meta_points = cost(1)
+            metamagic_field_str += f"""＂-f＂ ＂Extended Spell (-{meta_points})|When you cast a spell that has a duration of 1 minute or longer, you can spend 1 sorcery point to double its duration, to a maximum duration of 24 hours.＂ """
+            parsed_args.ignore(i)
+
+        case "heightened" | "hespell" | "hes":
+            meta_points = cost(3)
+            metamagic_field_str += f"""＂-f＂ ＂Heightened Spell (-{meta_points})|When you cast a spell that forces a creature to make a saving throw to resist its effects, you can spend 3 sorcery points to give one target of the spell disadvantage on its first saving throw made against the spell.＂ """
+            parsed_args.ignore(i)
+        
+        case "quickened" | "quspell" | "qus":
+            meta_points = cost(2)
+            metamagic_field_str += f"""＂-f＂ ＂Quickened Spell (-{meta_points})|When you cast a spell that has a casting time of 1 action, you can spend 2 sorcery points to change the casting time to 1 bonus action for this casting.＂ """
+            parsed_args.ignore(i)
+
+        case "subtle" | "suspell" | "sus":
+            meta_points = cost(1)
+            metamagic_field_str += f"""＂-f＂ ＂Subtle Spell (-{meta_points})|When you cast a spell, you can spend 1 sorcery point to cast it without any somatic or verbal components.＂ """
+            parsed_args.ignore(i)
+
+        case "twinned" | "twspell" | "tws":
+            meta_points = cost(
+                max(spell_level, 1)
+            )
+            metamagic_field_str += f"""＂-f＂ ＂Twinned Spell (-{meta_points})|When you cast a spell that targets only one creature and doesn't have a range of self, you can spend a number of sorcery points equal to the spell's level (**{spell_level}**) to target a second creature in range with the same spell (1 sorcery point if the spell is a cantrip).{N + N}To be eligible, a spell must be incapable of targeting more than one creature at the spell's current level. For example, *magic missile* and *scorching ray* aren't eligible, but *ray of frost* and *chromatic orb* are.＂ """
+            parsed_args.ignore(i)
+
+        case "seeking" | "sespell" | "ses":
+            meta_points = cost(2)
+            metamagic_field_str += f"""＂-f＂ ＂Seeking Spell (-{meta_points})|If you make an attack roll for a spell and miss, you can spend 2 sorcery points to reroll the d20, and you must use the new roll.{N + N}You can use Seeking Spell even if you have already used a different Metamagic option during the casting of the spell. ＂ """
+            parsed_args.ignore(i)
+
+        case "transmuted" | "trspell" | "trs":
+            meta_points = cost(1)
+            metamagic_field_str += f"""＂-f＂ ＂Transmuted Spell (-{meta_points})|When you cast a spell that deals a type of damage from the following list, you can spend 1 sorcery point to change that damage type to one of the other listed types: acid, cold, fire, lightning, poison, thunder.＂ """
+            parsed_args.ignore(i)
+
+# Makes :points: an int again.
+points = points[0]
+
+# Errors if char doesn't have enough points to spend, unless `-i`
 if not ignore and cc < points:
     using(int_lib='b7c014b7-e267-463c-bc60-8cf9651031fb')
     err(f"""{name} doesn't have enough Spell Points to cast {spell.name} like this! {spell.name} is {int_lib.ordinal(spell.level)}-level, and you tried casting it at {int_lib.ordinal(spell_level)}-level. No Spell Points were expended. Try using `-i` to ignore requirements or taking a long rest.""")
 
+# Expends points, or modifies :points: so the embed shows that 0 were spent.
 if not ignore:
     ch.mod_cc(CCNAME, -points)
 else:
     points = 0
 
+# Reports how many points were spent to the user.
 point_str = f""" ＂-f＂ ＂{CCNAME} (-{points})|{ch.cc_str(CCNAME)}＂ """
 
-# Slices the string of arguments after the alias to exclude the provided name of the spell.
-argument_string = " ".join(["＂" + i + "＂" for i in args[1:]])
+# Passes secure arguments to the alias (for the user's `!cast` arguements + snippets) so `"` and `'` won't break it.
+# Also excludes spell name
+using(arg_lib='0a015433-288e-441e-b0ec-1d5b905c9646')
+args = arg_lib.unparse(parsed_args)
+argument_string = " ".join(["＂" + i + "＂" for i in args])
 
-return f"""cast ＂{spell.name}＂ {point_str} {argument_string} -i"""
+return f"""cast ＂{spell.name}＂ {metamagic_field_str} {point_str} {argument_string} -i"""
 </drac2>
