@@ -1,0 +1,172 @@
+# arg_lib = '0a015433-288e-441e-b0ec-1d5b905c9646'
+#
+# A module to help with processing args and converting them between different
+# formats.
+#
+# ===== Functions =====
+#
+# args_to_list(raw_args): Reads a string of args (like &*&) and converts it
+#     into a list (like &ARGS&).
+#
+# args_to_str(args_list): Reads a list of args (like &ARGS&) and converts it
+#     into a string (like &*&).
+#
+# split_arg(arg): Returns a tuple containing the main arg, and a list of
+#     any target-specific args included after the first pipe character (|).
+#
+# join_arg(main_arg, specific_args): Returns a string joining the main arg
+#     and any specific args into one string separated by a pipe character (|).
+#
+# unparse(args): Reads a ParsedArguments and returns a list of args (like
+#     &ARGS&). NOTE: You MUST do argparse(args, parse_ephem = False) as
+#     ephemeral arguments cannot currently be supported by this.
+#
+# ===== Constants =====
+#
+# QUOTE_PAIRS: A dict with valid opening quotes as keys, and their matching
+#     closing quotes as the values.
+#
+# NON_APOSTROPHE_QUOTES: A set of opening quotes excluding the apostrophe.
+
+
+QUOTE_PAIRS = {
+    '"': '"',
+    "'": "'",
+    "‘": "’",
+    "‚": "‛",
+    "“": "”",
+    "„": "‟",
+    "⹂": "⹂",
+    "「": "」",
+    "『": "』",
+    "〝": "〞",
+    "﹁": "﹂",
+    "﹃": "﹄",
+    "＂": "＂",
+    "｢": "｣",
+    "«": "»",
+    "‹": "›",
+    "《": "》",
+    "〈": "〉"
+}
+
+NON_APOSTROPHE_QUOTES = set(QUOTE_PAIRS) - {"'"}
+
+
+def args_to_list(raw_args):
+    """
+    Reads a string of args (like `&*&`) and converts it into a list (like `&ARGS&`).
+    :arg str raw_args: a string of args (like `&*&`).
+    :return: a list of args (like `&ARGS&`).
+    :rtype: list
+    """
+    no_backslash_args = ''.join('_' if '\\' in raw_args[i - 1:i] else raw_args[i] for i in range(len(raw_args)))   
+
+    out = []
+    start = 0
+    length = len(raw_args)
+
+    while start < length:
+        word_in_progress = ''
+        if closing_quote := QUOTE_PAIRS.get(no_backslash_args[start]):
+            start += 1
+
+        for end in range(start, length):
+            if closing_quote is None:
+                if raw_args[end].isspace():
+                    # Finish word
+                    out.append(word_in_progress + raw_args[start:end])
+                    break
+                elif no_backslash_args[end] in NON_APOSTROPHE_QUOTES:
+                    closing_quote = QUOTE_PAIRS.get(no_backslash_args[end])
+                    word_in_progress += raw_args[start:end]
+                    start = end + 1
+
+            elif no_backslash_args[end] == closing_quote:
+                if end + 1 == length or no_backslash_args[end + 1].isspace():
+                    # Finish word
+                    out.append(word_in_progress + raw_args[start:end])
+                    break
+                else:
+                    # Keep going
+                    closing_quote = None
+                    word_in_progress += raw_args[start:end]
+                    start = end + 1
+        else:
+            # Finish word
+            out.append(word_in_progress + raw_args[start:])
+
+        # Skip whitespace.
+        start = length - len(raw_args[end + 1:].lstrip())
+
+    return out
+
+
+# Because backspaces aren't allowed in f-strings
+_ESC_QUOTE = '\\"'
+
+
+def args_to_str(args_list):
+    """
+    Reads a list of args (like `&ARGS&`) and converts it into a string (like `&*&`).
+    :arg list args_list: a list of args (like `&ARGS&`).
+    :return: a string of args (like `&*&`).
+    :rtype: str
+    """
+    return ' '.join(f'''"{arg.replace('"', _ESC_QUOTE)}"''' for arg in args_list)
+
+
+def split_arg(arg):
+    """
+    Returns a tuple containing the main arg, and a list of any target-specific
+    args included after the first pipe character (|).
+
+    Example:
+    > target_name, target_args = arg_lib.split_arg('GO1|-d 1d6')
+    > target_name == 'GO1'
+    > target_args == ['-d', '1d6']
+
+    :arg str arg: an arg which may contain target-specific args.
+    :return: the main arg, and a list of target-specific args.
+    :rtype: (str, list)
+    """
+    main_arg, _, raw_args = arg.partition('|')
+    return (main_arg, args_to_list(raw_args))
+
+
+def join_arg(main_arg, specific_args):
+    """
+    Returns a string joining the main arg and any specific args into one
+    string separated by a pipe character (|).
+
+    Example:
+    > arg_lib.join_arg('GO1', ['-d', '1d6']) == 'GO1|-d 1d6'
+
+    :arg str main_arg: the main arg.
+    :arg list specific_args: a list of specific args.
+    :return: a string which combines the main arg, a pipe separator, and the specific args.
+    :rtype: str
+    """
+    if specific_args:
+        return f'{main_arg}|{args_to_str(specific_args)}'
+    else:
+        return main_arg
+
+
+def unparse(args):
+    """
+    Reads a ParsedArguments and returns a list of args (like `&ARGS&`).
+
+    NOTE: You MUST do `argparse(args, parse_ephem = False)` as ephemeral
+    arguments cannot currently be supported.
+
+    :arg ParsedArguments args: a ParsedArguments object to convert.
+    :return: a list of args (like `&ARGS&`).
+    :rtype: list
+    """
+    dontcare = lambda x: x
+    return sum([
+        [arg] if val is True else [f'-{arg}', val]
+        for arg in args
+        for val in args.get(arg, type_ = dontcare)
+    ], [])
