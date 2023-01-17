@@ -1,7 +1,6 @@
 <drac2>
 N = '\n'
 CCNAME = 'Spell Points'
-ZERO_SPACE = "\u200c"
 
 # !spellpoints
 PREFIX = f"{ctx.prefix}"
