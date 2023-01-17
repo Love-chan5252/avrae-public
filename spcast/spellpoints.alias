@@ -2,6 +2,7 @@
 N = '\n'
 CCNAME = 'Spell Points'
 FOOTER_STRING = "!spellpoints | v1.0.0 | Lovingly made by @""Love-chan#5252"
+ZERO_SPACE = "\u200c"
 CHARACTER_PIC = image
 
 args = &ARGS&
@@ -10,13 +11,13 @@ ch = character()
 
 
 # Stores the number of how many instances of a class/subclass level equals one caster level.
-casting_classes = load_json(
+spellpoint_classes = load_json(
     get_gvar("344f4ff2-f3f2-47b1-ab3d-9cc03199b9d7")
 )
 
 if not args or "help" in args or "?" in args:
     using(json="c0a7533c-6376-41e9-8c03-18f7742668e5")
-    return f"""embed -title ＂{name} needs some help with their Spell Points!＂ -desc ＂If you want to **__create a Spell Points counter;__** run `!spellpoints create`. Class levels and subclass levels created with `!level` will be used to calculate Spell Points.{N}*Note: if you have not run `!level` yet from [Verbose Character Tools](https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d), please subscribe to it here and run it at least once. If you have a subclass such as Eldritch Knight or Arcane Trickster, please use `!level <class> <subclass>` so they can be detected by this alias.*{N+N}Use `!spellpoints help` to **__see THIS help embed.__ (The one you are currently reading).**{N+N}To add **__homebrew spellcasting classes;__** you'll need to create a gvar formatted as a JSON which includes the name of the class, and the number of class levels in that class which equate to one full caster level. (e.g., `"Paladin": 2`, `"Wizard": 1`, etc.){N}For homebrew subclasses, use the name of the class followed by the name of the subclass in parenthesis. This __assumes that the subclass has been set up with `!level` data.__ For example: `"Fighter (Eldritch Knight)": 3` or `"Rogue (Arcane Trickster)": 3`{N+N}**Here is an Example for Recreating the Alias' Default `casting_classes` Information, Plus a Placeholder Full-Caster Class:**{'`' * 3}json{N}!gvar create {json.format_json(casting_classes) + '`'*3}Avrae will then spit out a gvar address. Copy that address and use it to create a `casting_classes` **uvar**, or **cvar** variable formatted as a list, i.e. `!uvar shapeshifter_races ["344f4ff2-f3f2-47b1-ab3d-9cc03199b9d7"]`. You can also create a server variable (**svar**) if you want to share your homebrew with others. Multiple gvar addresses can be added to that list. When you're finished, you'll be ready to use `!spellpoints`!{N+N}If you are a server owner who would like to **__override casting_classes settings;__** create an **svar** called `casting_classes_override` in the same format as one of the **gvars** inside of `casting_classes`. When you set an override, no other class levels will be recognized on your server when calculating spell points.＂ -footer ＂{FOOTER_STRING}＂ """
+    return f"""embed -title ＂{name} needs some help with their Spell Points!＂ -desc ＂If you want to **__create a Spell Points counter;__** run `!spellpoints create`. Class levels and subclass levels created with `!level` will be used to calculate Spell Points.{N}*Note: if you have not run `!level` yet from [Verbose Character Tools](https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d), please subscribe to it here and run it at least once. If you have a subclass such as Eldritch Knight or Arcane Trickster, please use `!level <class> <subclass>` so they can be detected by this alias.*{N+N}Use `!spellpoints help` to **__see THIS help embed.__ (The one you are currently reading).**{N+N}To add **__homebrew spellcasting classes;__** you'll need to create a gvar formatted as a JSON which includes the name of the class, and the number of class levels in that class which equate to one full caster level. (e.g., `"Paladin": 2`, `"Wizard": 1`, etc.){N}For homebrew subclasses, use the name of the class followed by the name of the subclass in parenthesis. This __assumes that the subclass has been set up with `!level` data.__ For example: `"Fighter (Eldritch Knight)": 3` or `"Rogue (Arcane Trickster)": 3`{N+N}**Here is an Example for Recreating the Alias' Default `spellpoint_classes` Information, Plus a Placeholder Full-Caster Class:**{'`' * 3}json{N}!gvar create {json.format_json(spellpoint_classes) + '`'*3}Avrae will then spit out a gvar address. Copy that address and use it to create a `spellpoint_classes` **uvar**, or **cvar** variable formatted as a list, i.e. `!uvar spellpoint_classes ["344f4ff2-f3f2-47b1-ab3d-9cc03199b9d7"]`. You can also create a server variable (**svar**) if you want to share your homebrew with others. Multiple gvar addresses can be added to that list. When you're finished, you'll be ready to use `!spellpoints`!{N+N}If you are a server owner who would like to **__override spellpoint_classes settings;__** create an **svar** called `spellpoint_classes_override` in the same format as one of the **gvars** inside of `spellpoint_classes`. When you set an override, no other class levels will be recognized on your server when calculating spell points.{N}**Server Override Example:** `!svar spellpoint_classes_override {"Sorcerer": 1}`＂ -footer ＂{FOOTER_STRING}＂ """
 
 if "create" in args[0].lower():
     get_functions = [ch.get_cvar, get_uvar, get_svar]
@@ -48,30 +49,32 @@ if "create" in args[0].lower():
 
     # Adds in the homebrewed/extra casting classes if they exist.
     for getvar in get_functions:
-        casting_classes.update(
+        spellpoint_classes.update(
             load_json(
-                getvar("casting_classes", "{}")
+                getvar("spellpoint_classes", "{}")
             )
         )
 
-    # If a server has a casting_classes_override set, it replaces all other :casting_classes: settings.
-    if get_svar("casting_classes_override"):
-        casting_classes = load_json(get_svar("casting_classes_override"))
-        override_msg = N + "**SERVER CASTING_CLASSES OVERRIDE ACTIVE.**" + N + "Allowed classes: " + ", ".join(casting_classes.keys()) + "." + N + N
+    # If a server has a spellpoint_classes_override set, it replaces all other :spellpoint_classes: settings.
+    if get_svar("spellpoint_classes_override"):
+        spellpoint_classes = load_json(get_svar("spellpoint_classes_override"))
+        override_msg = "-f ＂SERVER SPELLPOINT CLASSES OVERRIDE ACTIVE.|Allowed classes: " + ", ".join(spellpoint_classes.keys()) + ".＂"
     else:
         override_msg = ""
 
     caster_level = 0
     my_levels = {}
 
+    spellpoint_classes = {k.lower(): v for k, v in spellpoint_classes.items()}
+
     for class_, lvl in ch.levels:
-        if class_ in casting_classes:
-            my_levels[class_] = lvl / casting_classes[class_]
+        if class_.lower().strip() in spellpoint_classes:
+            my_levels[class_] = lvl / spellpoint_classes[class_.lower().strip()]
 
     if (subclass := ch.get_cvar("subclass")):
         for k, v in load_json(subclass).items():
-            if (key := k[:-5] + " (" + v + ")") in casting_classes:
-                my_levels[key] = ch.levels.get(k[:-5]) / casting_classes[key]
+            if (key := k[:-5] + " (" + v + ")").lower() in spellpoint_classes:
+                my_levels[key] = ch.levels.get(k[:-5]) / spellpoint_classes[key.lower()]
     else:
         return f"""embed -title ＂You haven't set up their `!level` yet!＂ -desc ＂This alias needs to fetch your subclass levels in order to calculate your Spell Points! To allow it to do so, please subscribe to **[Verbose Character Tools](https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d)** and run `!level <class> <subclass>`. See `!level help` for further instructions.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
 
@@ -93,5 +96,5 @@ if "create" in args[0].lower():
         reset="long"
     )
 
-    return f"""embed -title ＂New Counter 'Spell Points' Created For {name}.＂ -desc ＂{override_msg + new_counter.full_str(True) + N + N}**Spellcaster Levels**{N + N.join([f'{i}: `{v}`' for i, v in my_levels.items()]) + N + N}**Spell Point Settings**{N}Metamagic Adept Points Included: `{spellpoint_settings['include_metamagic_adept']}`{N}Sorcery Points Included: `{spellpoint_settings['include_sorcery_points']}`{N + N}If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spellpoint_settings` cvar to `True`.{N + N}Want to add homebrewed casting classes, or manage which classes do and don't count? See `!spellpoints help` for more!＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+    return f"""embed -title ＂New Counter 'Spell Points' Created For {name}.＂ {override_msg} -f ＂Spellcaster Levels|{N.join([f'{i}: `{v}`' for i, v in my_levels.items()])}|inline＂ -f ＂Spell Point Settings|Metamagic Adept Points Included: `{spellpoint_settings['include_metamagic_adept']}`{N}Sorcery Points Included: `{spellpoint_settings['include_sorcery_points']}`|inline＂ -f ＂Spell Points|{new_counter.full_str()}＂ -f ＂More Customization|If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spellpoint_settings` cvar to `True`.{N + N}Want to add homebrewed casting classes, or manage which classes do and don't count? See `!spellpoints help` for more!＂ -f ＂Troubleshooting|Some levels not showing up? This is often caused by uncapitalized class names or leading/trailing spaces in class names on character sheets, especially with casting subclasses. `!level <class> <subclass>` will also not function properly with leading/trailing spaces or improperly capitalized class names.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
 </drac2>

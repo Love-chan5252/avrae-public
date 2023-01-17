@@ -25,7 +25,7 @@ else:
 if not args:
     example = [{"name": "Love-chan's Eminent Example", "level": 9}, {"name": "Instructionate", "level": 0}]
     using(json="c0a7533c-6376-41e9-8c03-18f7742668e5")
-    return f"""embed -title ＂{name} needs help using the `!spcast` alias!＂ -desc ＂Use `!spcast "spell name"` to cast a spell using Spell Points instead of Spell Slots! Casting a spell with Spell Points requires:{N + N}- A custom counter (cc) named "Spell Points" (which can be created with `!spellpoints create`).{N}- The spell you are trying to cast being in your spell book.{N + N}This alias runs on the `!cast` command. It will accept all arguments detailed in `!help cast`, and all **snippets** accepted by `!cast`.{N + N}You can use  `-i` to ignore all requirements for casting the spell.{N + N}You can use `-p #` to modify the sorcery point cost by `#` without changing the level of the spell.{N + N}You can expend Spell Points to use **Metamagic** by typing the name of the Metamagic you are trying to use, or one of the designated shortened names.{N + N}- **Careful Spell:** `careful` | `caspell` | `cas`{N}- **Distant Spell: **`distant` | `dispell` | `dis`{N}- **Empowered Spell:** `empowered` | `emspell` | `ems` (*rerolls must be done manually*){N}- **Extended Spell:** `extended` | `exspell` | `exs` (*duration must be modified manually*){N}- **Heightened Spell:** `heightened` | `hespell` | `hes` (*selected disadvantage must be added manually*){N}- **Quickened Spell:** `quickened` | `quspell` | `qus`{N}- **Subtle Spell:** `subtle` | `suspell` | `sus`{N}- **Twinned Spell:** `twinned` | `twspell` | `tws` (*automatically detects spell level*){N}- **Seeking Spell:** `seeking` | `sespell` | `ses` (*rerolls must be done manually*){N}- **Transmuted Spell:** `transmuted` | `trspell` | `trs` (*must supply `-dtype "[X]"` manually*){N + N}*Example: `!spcast "Sacred Flame" twspell -t Bad1 -t Bad2`*{N + N}Metamagic with Spell Points consumes the same number of Spell Points as it would otherwise consume Sorcery Points. If using `-i`, Metamagic will not consume any spell points. Spell Point metamagic snippets will never automatically cancel each other out or prevent you from using more at once.{N + N}This alias will also keep track of which levels of spells you're allowed to cast, and how many high-level spells you're allowed to cast per day based on your level. You can modify these thresholds by editing your `spcast_settings` cvar; or if you're a server owner trying to enforce homebrew rules, the `spcast_override` svar instead.{N + N}**Adding Homebrew Spells**{N}To cast homebrewed spells, they'll first need to be in a tome on the [Avrae Dashboard](https://avrae.io/dashboard/homebrew/spells). Without automation on the Dashboard, they cannot be cast by any means. {N + N}You'll need to create a gvar formatted as a JSON which includes the names and levels of the homebrewed spells. Each spell itself should be a dict, and all of the spells should be part of a list. We do it in this format in order to make it possible to *export the tome from the Avrae dashboard as a JSON, and use the copied text inside the new gvar.* You can then remove everything except name and level to make it cleaner.{N + N}**Here is an Example for Creating Two Custom Homebrew Spells. One of 9th Level, and One Cantrip:**{N + '`'*3}json{N}!gvar create {json.format_json(example)}{'`'*3} Avrae will then spit out a gvar address. Copy that address and use it to create a user variable **uvar (recommended)** or character variable (**cvar**) called `brewspells`, formatted as a list, i.e. `!uvar brewspells ["91a5ccb0-8ac6-405f-9057-6c1bc2d80e86"]`. You can also create a server variable (**svar**) if you want to share your homebrew with others. Multiple gvar addresses can be added to that list. When you're finished, you'll be ready to use homebrew spells with `!spcast`!＂ -footer ＂{FOOTER_STRING}＂ """
+    return f"""embed -title ＂{name} needs help using the `!spcast` alias!＂ -desc ＂Use `!spcast "spell name"` to cast a spell using Spell Points instead of Spell Slots! Casting a spell with Spell Points requires:{N + N}- A custom counter (cc) named "Spell Points" (which can be created with `!spellpoints create`).{N}- The spell you are trying to cast being in your spell book.{N + N}This alias runs on the `!cast` command. It will accept all arguments detailed in `!help cast`, and all **snippets** accepted by `!cast`.{N + N}You can use  `-i` to ignore all requirements for casting the spell.{N + N}You can use `-p #` to modify the sorcery point cost by `#` without changing the level of the spell.{N + N}You can expend Spell Points to use **Metamagic** by typing the name of the Metamagic you are trying to use, or one of the designated shortened names. Only **exact matches** to these choices will be accepted.{N + N}- **Careful Spell:** `careful` | `care` | `caspell` | `cas`{N}- **Distant Spell: **`distant` | `dist` | `dispell` | `dis`{N}- **Empowered Spell:** `empowered` | `power` | `emspell` | `ems` (*rerolls must be done manually*){N}- **Extended Spell:** `extended` | `extend` | `exspell` | `exs` (*duration must be modified manually*){N}- **Heightened Spell:** `heightened` | `height` | `hespell` | `hes` (*selected disadvantage must be added manually*){N}- **Quickened Spell:** `quickened` | `quick` | `quspell` | `qus`{N}- **Subtle Spell:** `subtle` | `subt` | `suspell` | `sus`{N}- **Twinned Spell:** `twinned` | `twin` | `twspell` | `tws` (*automatically detects spell level*){N}- **Seeking Spell:** `seeking` | `seek` | `sespell` | `ses` (*rerolls must be done manually*){N}- **Transmuted Spell:** `transmuted` | `trans` | `trspell` | `trs` (*must supply `-dtype "[X]"` manually*){N + N}*Example: `!spcast "Sacred Flame" twspell -t Bad1 -t Bad2`*{N + N}**WARNING:** DO *__NOT__* USE `-twspell` or add a `-` to any of these snippets. The `-` character turns arguments into *__flag arguments__* on Avrae, which causes Avrae to look for the argument **after** the flag argument. For example, in `-t TA1` or `-l 9`.{N + N}Metamagic with Spell Points consumes the same number of Spell Points as it would otherwise consume Sorcery Points. If using `-i`, Metamagic will not consume any spell points. Spell Point metamagic snippets will never automatically cancel each other out or prevent you from using more at once.{N + N}This alias will also keep track of which levels of spells you're allowed to cast, and how many high-level spells you're allowed to cast per day based on your level. You can modify these thresholds by editing your `spcast_settings` cvar; or if you're a server owner trying to enforce homebrew rules, the `spcast_override` svar instead.{N + N}**Adding Homebrew Spells**{N}To cast homebrewed spells, they'll first need to be in a tome on the [Avrae Dashboard](https://avrae.io/dashboard/homebrew/spells). Without automation on the Dashboard, they cannot be cast by any means. {N + N}You'll need to create a gvar formatted as a JSON which includes the names and levels of the homebrewed spells. Each spell itself should be a dict, and all of the spells should be part of a list. We do it in this format in order to make it possible to *export the tome from the Avrae dashboard as a JSON, and use the copied text inside the new gvar.* You can then remove everything except name and level to make it cleaner.{N + N}**Here is an Example for Creating Two Custom Homebrew Spells. One of 9th Level, and One Cantrip:**{N + '`'*3}json{N}!gvar create {json.format_json(example)}{'`'*3} Avrae will then spit out a gvar address. Copy that address and use it to create a user variable **uvar (recommended)** or character variable (**cvar**) called `brewspells`, formatted as a list, i.e. `!uvar brewspells ["91a5ccb0-8ac6-405f-9057-6c1bc2d80e86"]`. You can also create a server variable (**svar**) if you want to share your homebrew with others. Multiple gvar addresses can be added to that list. When you're finished, you'll be ready to use homebrew spells with `!spcast`!＂ -footer ＂{FOOTER_STRING}＂ """
 
 # Loads the default list of all of the spells.
 # A spell is a dictionary.
@@ -128,54 +128,54 @@ def get_mod(stat):
 
 for i in args[1:]:
     match i.lower():    
-        case "careful" | "caspell" | "cas":
+        case "careful" | "care" | "caspell" | "cas":
             meta_points = cost(1)
             metamagic_field_str += f"""＂-f＂ ＂Careful Spell (-{meta_points})|When you cast a spell that forces other creatures to make a saving throw, you can protect some of those creatures from the spell's full force. To do so, you spend 1 sorcery point and choose a number of those creatures up to your Charisma modifier (**{get_mod("cha")}**) (minimum of one creature). A chosen creature automatically succeeds on its saving throw against the spell.＂ """
             parsed_args.ignore(i)
 
-        case "distant" | "dispell" | "dis":
+        case "distant" | "dist" | "dispell" | "dis":
             meta_points = cost(1)
             metamagic_field_str += f"""＂-f＂ ＂Distant Spell (-{meta_points})|When you cast a spell that has a range of 5 feet or greater, you can spend 1 sorcery point to double the range of the spell.{N + N}When you cast a spell that has a range of touch, you can spend 1 sorcery point to make the range of the spell 30 feet.＂ """
             parsed_args.ignore(i)
 
-        case "empowered" | "emspell" | "ems":
+        case "empowered" | "power" | "emspell" | "ems":
             meta_points = cost(1)
             metamagic_field_str += f"""＂-f＂ ＂Empowered Spell (-{meta_points})|When you roll damage for a spell, you can spend 1 sorcery point to reroll a number of the damage dice up to your Charisma modifier (**{get_mod("cha")}**) (minimum of one). You must use the new rolls.{N + N}You can use Empowered Spell even if you have already used a different Metamagic option during the casting of the spell.＂ """
             parsed_args.ignore(i)
 
-        case "extended" | "exspell" | "exs":
+        case "extended" | "extend" | "exspell" | "exs":
             meta_points = cost(1)
             metamagic_field_str += f"""＂-f＂ ＂Extended Spell (-{meta_points})|When you cast a spell that has a duration of 1 minute or longer, you can spend 1 sorcery point to double its duration, to a maximum duration of 24 hours.＂ """
             parsed_args.ignore(i)
 
-        case "heightened" | "hespell" | "hes":
+        case "heightened" | "height" | "hespell" | "hes":
             meta_points = cost(3)
             metamagic_field_str += f"""＂-f＂ ＂Heightened Spell (-{meta_points})|When you cast a spell that forces a creature to make a saving throw to resist its effects, you can spend 3 sorcery points to give one target of the spell disadvantage on its first saving throw made against the spell.＂ """
             parsed_args.ignore(i)
         
-        case "quickened" | "quspell" | "qus":
+        case "quickened" | "quick" | "quspell" | "qus":
             meta_points = cost(2)
             metamagic_field_str += f"""＂-f＂ ＂Quickened Spell (-{meta_points})|When you cast a spell that has a casting time of 1 action, you can spend 2 sorcery points to change the casting time to 1 bonus action for this casting.＂ """
             parsed_args.ignore(i)
 
-        case "subtle" | "suspell" | "sus":
+        case "subtle" | "subt" | "suspell" | "sus":
             meta_points = cost(1)
             metamagic_field_str += f"""＂-f＂ ＂Subtle Spell (-{meta_points})|When you cast a spell, you can spend 1 sorcery point to cast it without any somatic or verbal components.＂ """
             parsed_args.ignore(i)
 
-        case "twinned" | "twspell" | "tws":
+        case "twinned" | "twin" | "twspell" | "tws":
             meta_points = cost(
                 max(spell_level, 1)
             )
             metamagic_field_str += f"""＂-f＂ ＂Twinned Spell (-{meta_points})|When you cast a spell that targets only one creature and doesn't have a range of self, you can spend a number of sorcery points equal to the spell's level (**{spell_level}**) to target a second creature in range with the same spell (1 sorcery point if the spell is a cantrip).{N + N}To be eligible, a spell must be incapable of targeting more than one creature at the spell's current level. For example, *magic missile* and *scorching ray* aren't eligible, but *ray of frost* and *chromatic orb* are.＂ """
             parsed_args.ignore(i)
 
-        case "seeking" | "sespell" | "ses":
+        case "seeking" | "seek" | "sespell" | "ses":
             meta_points = cost(2)
             metamagic_field_str += f"""＂-f＂ ＂Seeking Spell (-{meta_points})|If you make an attack roll for a spell and miss, you can spend 2 sorcery points to reroll the d20, and you must use the new roll.{N + N}You can use Seeking Spell even if you have already used a different Metamagic option during the casting of the spell. ＂ """
             parsed_args.ignore(i)
 
-        case "transmuted" | "trspell" | "trs":
+        case "transmuted" | "trans" | "trspell" | "trs":
             meta_points = cost(1)
             metamagic_field_str += f"""＂-f＂ ＂Transmuted Spell (-{meta_points})|When you cast a spell that deals a type of damage from the following list, you can spend 1 sorcery point to change that damage type to one of the other listed types: acid, cold, fire, lightning, poison, thunder.＂ """
             parsed_args.ignore(i)
