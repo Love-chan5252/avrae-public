@@ -1,4 +1,7 @@
 <drac2>
+# This is a COPY of the ORIGINAL, v1.0 SPCAST ALIAS. NOT WRITTEN BY ME.
+# I have ADDED This comment, plus all of the empty lines you see (to make it more readable.) The original did not have empty lines. Not a single one.
+
 args = &ARGS&
 a = argparse(args)
 cc = "Spell Points"
