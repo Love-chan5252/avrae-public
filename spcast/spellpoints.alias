@@ -5,7 +5,7 @@ CCNAME = 'Spell Points'
 # !spellpoints
 PREFIX = f"{ctx.prefix}"
 CMD = f"{PREFIX}{ctx.alias}"
-FOOTER_STRING = f"{CMD} | v1.2.0 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = f"{CMD} | v1.2.1 | Lovingly made by @""Love-chan#5252"
 CHARACTER_PIC = image
 
 args = &ARGS&
@@ -154,7 +154,7 @@ match ((args + ["help"])[0]).lower():
 
             spellpoint_settings = load_json(spellpoint_settings)
 
-        return f"""embed -title ＂{name} Manages Their Spell Point Settings!＂ -desc ＂**Include Metamagic Adept** - `{spellpoint_settings['include_metamagic_adept']}`{N}When `True`, will add 2 extra Spell Points to the total when using `{CMD} create`.{N+N}**Include Sorcery Points** - `{spellpoint_settings['include_sorcery_points']}`{N}When `True`, will add extra Spell Points equal to your Sorcerer level, provided your Sorcerer level is higher than 2.{N+N}**Toggling**{N}Try `{CMD} settings sorcery` or `{CMD} settings metamagic` to toggle the appropriate setting.＂ {toggle_fields} """
+        return f"""embed -title ＂{name} Manages Their Spell Point Settings!＂ -desc ＂**Include Metamagic Adept** - `{spellpoint_settings['include_metamagic_adept']}`{N}When `True`, will add 2 extra Spell Points to the total when using `{CMD} create`.{N+N}**Include Sorcery Points** - `{spellpoint_settings['include_sorcery_points']}`{N}When `True`, will add extra Spell Points equal to your Sorcerer level, provided your Sorcerer level is higher than 2.{N+N}**Toggling**{N}Try `{CMD} settings sorcery` or `{CMD} settings metamagic` to toggle the appropriate setting.＂ {toggle_fields} -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
 
     case "help" | _:
         using(json="c0a7533c-6376-41e9-8c03-18f7742668e5")
