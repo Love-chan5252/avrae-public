@@ -1,5 +1,6 @@
-## There was just no way to get a good formatted print of a json in Avrae, so now, there is! Enjoy!
-## Created by Love-chan#5252
+# There was just no way to get a good formatted print of a json in Avrae, so now, there is! Enjoy!
+# Created by Love-chan#5252
+# using(json = "c0a7533c-6376-41e9-8c03-18f7742668e5")
 
 def format_json(json, indentation=2, iterations: int=1):
     n = '\n'
