@@ -5,7 +5,7 @@ CCNAME = 'Spell Points'
 # !spcast
 PREFIX = f"{ctx.prefix}"
 CMD = f"{PREFIX}{ctx.alias}"
-FOOTER_STRING = f"{CMD} | v1.2.0 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = f"{CMD} | v2.2.0 | Lovingly made by @""Love-chan#5252"
 CHARACTER_PIC = image
 
 # Replace blacklisted, wrongly-flagged arguments with unflagged ones.
