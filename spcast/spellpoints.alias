@@ -5,7 +5,7 @@ CCNAME = 'Spell Points'
 # !spellpoints
 PREFIX = f"{ctx.prefix}"
 CMD = f"{PREFIX}{ctx.alias}"
-FOOTER_STRING = f"{CMD} | v1.0.0 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = f"{CMD} | v1.2.0 | Lovingly made by @""Love-chan#5252"
 CHARACTER_PIC = image
 
 args = &ARGS&
@@ -17,87 +17,150 @@ spellpoint_classes = load_json(
     get_gvar("344f4ff2-f3f2-47b1-ab3d-9cc03199b9d7")
 )
 
-if not args or "help" in args or "?" in args:
-    using(json="c0a7533c-6376-41e9-8c03-18f7742668e5")
-    example = """{"Sorcerer": 1}"""
-    return f"""embed -title ＂{name} needs some help with their Spell Points!＂ -desc ＂If you want to **__create a Spell Points counter;__** run `{CMD} create`. Class levels and subclass levels created with `{PREFIX}level` will be used to calculate Spell Points.{N}*Note: if you have not run `{PREFIX}level` yet from [Verbose Character Tools](https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d), please subscribe to it here and run it at least once. If you have a subclass such as Eldritch Knight or Arcane Trickster, please use `{PREFIX}level <class> <subclass>` so they can be detected by this alias.*{N + N}If you want to **__create  limiting counters for how many high-level spells you can cast__;** run `{CMD} create limiters`. Uses the same calculations as `{CMD} create`, so `{PREFIX}level` information is still necessary. Using `{CMD} create limiters` will not recreate or reset spellpoints.{N + N}Use `{CMD} help` to **__see THIS help embed.__ (The one you are currently reading).**{N + N}**Adding Homebrew Spellcasting Classes**{N}You'll need to create a gvar formatted as a JSON which includes the name of the class, and the number of class levels in that class which equate to one full caster level. (e.g., `"Paladin": 2`, `"Wizard": 1`, etc.){N}For homebrew subclasses, use the name of the class followed by the name of the subclass in parenthesis. This __assumes that the subclass has been set up with `{PREFIX}level` data.__ For example: `"Fighter (Eldritch Knight)": 3` or `"Rogue (Arcane Trickster)": 3`{N + N}**Here is an Example for Recreating the Alias' Default `spellpoint_classes` Information, Plus a Placeholder Full-Caster Class:**{'`' * 3}json{N + PREFIX}gvar create {json.format_json(spellpoint_classes) + '`'*3}Avrae will then spit out a gvar address. Copy that address and use it to create a `spellpoint_classes` **uvar**, or **cvar** variable formatted as a list, i.e. `{PREFIX}uvar spellpoint_classes ["344f4ff2-f3f2-47b1-ab3d-9cc03199b9d7"]`. You can also create a server variable (**svar**) if you want to share your homebrew with others. Multiple gvar addresses can be added to that list. When you're finished, you'll be ready to use `{CMD}`!{N + N}If you are a server owner who would like to **__override spellpoint_classes settings;__** create an **svar** called `spellpoint_classes_override` in the same format as one of the **gvars** inside of `spellpoint_classes`. When you set an override, no other class levels will be recognized on your server when calculating spell points.{N + N}**Server Override Example:** {'`'*3}json{N + PREFIX}svar spellpoint_classes_override {example + '`'*3}＂ -footer ＂{FOOTER_STRING}＂ """
-
-if "create" in args[0].lower():
-    get_functions = [ch.get_cvar, get_uvar, get_svar]
-
-    # How many Spell Points a character should have based on their caster levels.
-    points_by_level = (0, 4, 6, 14, 17, 27, 32, 38, 44, 57, 64, 73, 73, 83, 83, 94, 94, 107, 114, 123, 133)
-
-    # Creates the settings if they don't exist, then loads them.
-    ch.set_cvar_nx("spellpoint_settings", 
-        dump_json(
-            {
-                "include_metamagic_adept": False,
-                "include_sorcery_points": False
-            }
-        )
+# Creates the settings if they don't exist, then loads them.
+ch.set_cvar_nx("spellpoint_settings", 
+    dump_json(
+        {
+            "include_metamagic_adept": False,
+            "include_sorcery_points": False
+        }
     )
-    spellpoint_settings = load_json(ch.get_cvar("spellpoint_settings"))
+)
+spellpoint_settings = load_json(ch.get_cvar("spellpoint_settings"))
 
-    # Uses the settings to decide whether to add extra Spell Points.
-    # 2 extra Spell Points if metamagic adept points are included.
-    # Extra Spell Points equal to Sorcery Points if Sorcery Points are included.
-    extra_points = 0
-    if spellpoint_settings["include_metamagic_adept"]:
-        extra_points += 2
-    if spellpoint_settings["include_sorcery_points"]:
-        if ch.levels.get("Sorcerer") >= 2:
-            extra_points += SorcererLevel
+match ((args + ["help"])[0]).lower():
+    case "create":
+        get_functions = [ch.get_cvar, get_uvar, get_svar]
+
+        # Uses the settings to decide whether to add extra Spell Points.
+        # 2 extra Spell Points if metamagic adept points are included.
+        # Extra Spell Points equal to Sorcery Points if Sorcery Points are included.
+        extra_points = 0
+        if spellpoint_settings["include_metamagic_adept"]:
+            extra_points += 2
+        if spellpoint_settings["include_sorcery_points"]:
+            if ch.levels.get("Sorcerer") >= 2:
+                extra_points += SorcererLevel
 
 
-    # Adds in the homebrewed/extra casting classes if they exist.
-    for getvar in get_functions:
-        spellpoint_classes.update(
-            load_json(
-                getvar("spellpoint_classes", "{}")
+        # Adds in the homebrewed/extra casting classes if they exist.
+        for getvar in get_functions:
+            spellpoint_classes.update(
+                load_json(
+                    getvar("spellpoint_classes", "{}")
+                )
             )
+
+        # If a server has a spellpoint_classes_override set, it replaces all other :spellpoint_classes: settings.
+        if get_svar("spellpoint_classes_override"):
+            spellpoint_classes = load_json(get_svar("spellpoint_classes_override"))
+            override_msg = "-f ＂SERVER SPELLPOINT CLASSES OVERRIDE ACTIVE.|Allowed classes: " + ", ".join(spellpoint_classes.keys()) + ".＂"
+        else:
+            override_msg = ""
+
+        caster_level = 0
+        my_levels = {}
+
+        spellpoint_classes = {k.lower(): v for k, v in spellpoint_classes.items()}
+
+        for class_, lvl in ch.levels:
+            if class_.lower().strip() in spellpoint_classes:
+                my_levels[class_] = lvl / spellpoint_classes[class_.lower().strip()]
+
+        subclass_warning = ""
+
+        if (subclass := ch.get_cvar("subclass")):
+            for k, v in load_json(subclass).items():
+                if (key := k[:-5] + " (" + v + ")").lower() in spellpoint_classes:
+                    my_levels[key] = ch.levels.get(k[:-5]) / spellpoint_classes[key.lower()]
+
+        new_levels = {}
+        for k, v in my_levels.items():
+            caster_level += v
+            new_levels.update({k:round(v, 2)})
+        
+        my_levels = new_levels
+
+        caster_level = min(
+            floor(caster_level),
+            20
         )
 
-    # If a server has a spellpoint_classes_override set, it replaces all other :spellpoint_classes: settings.
-    if get_svar("spellpoint_classes_override"):
-        spellpoint_classes = load_json(get_svar("spellpoint_classes_override"))
-        override_msg = "-f ＂SERVER SPELLPOINT CLASSES OVERRIDE ACTIVE.|Allowed classes: " + ", ".join(spellpoint_classes.keys()) + ".＂"
-    else:
-        override_msg = ""
+        if "limiters" in args:
+            # The maximum level of spell a character is allowed to cast based on their counted caster levels.
+            limiters = (0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 9, 9)
 
-    caster_level = 0
-    my_levels = {}
+            max_spell_level = limiters[caster_level]
 
-    spellpoint_classes = {k.lower(): v for k, v in spellpoint_classes.items()}
+            new_ccs = []
 
-    for class_, lvl in ch.levels:
-        if class_.lower().strip() in spellpoint_classes:
-            my_levels[class_] = lvl / spellpoint_classes[class_.lower().strip()]
+            for i in (limitrange := range(max_spell_level + 1)[6:]):
+                
+                new_counter = ch.create_cc(f"{i}th-Level Casts ({CCNAME})",
+                    minVal="0",
+                    maxVal="1",
+                    reset="long",
+                    dispType="square"
+                )
 
-    if (subclass := ch.get_cvar("subclass")):
-        for k, v in load_json(subclass).items():
-            if (key := k[:-5] + " (" + v + ")").lower() in spellpoint_classes:
-                my_levels[key] = ch.levels.get(k[:-5]) / spellpoint_classes[key.lower()]
-    else:
-        return f"""embed -title ＂You haven't set up their `{PREFIX}level` yet!＂ -desc ＂This alias needs to fetch your subclass levels in order to calculate your Spell Points! To allow it to do so, please subscribe to **[Verbose Character Tools](https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d)** and run `{PREFIX}level <class> <subclass>`. See `{PREFIX}level help` for further instructions.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+                new_ccs.append(f"{N + new_counter.name} ({new_counter.max}/long rest) {new_counter}")
 
-    new_levels = {}
-    for k, v in my_levels.items():
-        caster_level += v
-        new_levels.update({k:round(v, 2)})
-    
-    my_levels = new_levels
+            limitrange = len(limitrange)
 
-    caster_level = min(
-        floor(caster_level),
-        20
-    )
+            cc_field = f"""-f ＂{"Newly Created Counters" if new_ccs else "No Limiters Created!"}|{"".join(new_ccs) if new_ccs else "*Your caster level isn't high enough!*"}＂ """
 
-    new_counter = ch.create_cc("Spell Points",
-        minVal="0",
-        maxVal=f"{points_by_level[caster_level] + extra_points}",
-        reset="long"
-    )
+            return f"""embed -title ＂{limitrange} High-Level {'Limiters' if limitrange != 1 else 'Limiter'} Created For {name}.＂ -desc ＂> *Spells of 6th level and higher are particularly taxing to cast. You can use spell points to create one slot of each level of 6th or higher. You can't create another slot of the same level until you finish a long rest.*＂ {override_msg} -f ＂Spellcaster Levels|{N.join([f'{i}: `{v}`' for i, v in my_levels.items()])}|inline＂ -f ＂Counted Spellcaster Level|{caster_level}|inline＂ {cc_field} -f ＂Modifying Limiters|If you'd like to cast spells beyond your prescribed limiters, please use `{PREFIX}cc` for your needs.{N +N}*Example: `{PREFIX}cc edit "9th-Level Casts (Spell Points)" -max 2` (changes your 9th-level spell limiter to be up to 2 times per day).*{N + N}If you really want custom limiter schemes based on level that badly, please message the creator of this alias.＂ -f ＂Using Limiters|Limiters will be automatically expended when casting high-level spells with `{PREFIX}spcast`. If you want to ignore them for some reason, use `-i` or `nolimiters` as an argument with `{PREFIX}spcast` to ignore limiters.{N + N}*Example: `{PREFIX}spcast "wish" nolimiters`*＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
 
-    return f"""embed -title ＂New Counter 'Spell Points' Created For {name}.＂ {override_msg} -f ＂Spellcaster Levels|{N.join([f'{i}: `{v}`' for i, v in my_levels.items()])}|inline＂ -f ＂Spell Point Settings|Metamagic Adept Points Included: `{spellpoint_settings['include_metamagic_adept']}`{N}Sorcery Points Included: `{spellpoint_settings['include_sorcery_points']}`|inline＂ -f ＂Spell Points|{new_counter.full_str()}＂ -f ＂More Customization|If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, edit the appropriate values in your `spellpoint_settings` cvar to `True`.{N + N}Want to add homebrewed casting classes, or manage which classes do and don't count? See `{CMD} help` for more!＂ -f ＂Troubleshooting|Some levels not showing up? This is often caused by uncapitalized class names or leading/trailing spaces in class names on character sheets, especially with casting subclasses. `{PREFIX}level <class> <subclass>` will also not function properly with leading/trailing spaces or improperly capitalized class names.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+        # How many Spell Points a character should have based on their counetd caster levels.
+        points_by_level = (0, 4, 6, 14, 17, 27, 32, 38, 44, 57, 64, 73, 73, 83, 83, 94, 94, 107, 114, 123, 133)
+
+        new_counter = ch.create_cc("Spell Points",
+            minVal="0",
+            maxVal=f"{points_by_level[caster_level] + extra_points}",
+            reset="long"
+        )
+
+        return f"""embed -title ＂New Counter 'Spell Points' Created For {name}.＂ {override_msg} -f ＂Spellcaster Levels|{N.join([f'{i}: `{v}`' for i, v in my_levels.items()])}|inline＂ -f ＂Spell Point Settings|Metamagic Adept Points Included: `{spellpoint_settings['include_metamagic_adept']}`{N}Sorcery Points Included: `{spellpoint_settings['include_sorcery_points']}`|inline＂ -f ＂{new_counter.name}|{new_counter.full_str()}＂ -f ＂More Customization|If you'd like to include Metamagic Adept points or Sorcery Points in your Spell Points total, try `{CMD} settings`.{N + N}Want to add homebrewed casting classes, or manage which classes do and don't count? See `{CMD} help` for more!＂ -f ＂Troubleshooting|Some levels not showing up? This is often caused by uncapitalized class names or leading/trailing spaces in class names on character sheets, especially with casting subclasses. `{PREFIX}level <class> <subclass>` will also not function properly with leading/trailing spaces or improperly capitalized class names.＂ -thumb ＂{CHARACTER_PIC}＂ -footer ＂{FOOTER_STRING}＂ """
+
+    case "settings" | "set":
+
+        toggle_fields = ""
+
+        if len(args) > 1:
+
+            lowercase_args = [i.lower() for i in args]
+
+            if "metamagic" in lowercase_args or "adept" in lowercase_args:
+                if spellpoint_settings['include_metamagic_adept'] == True:
+                    spellpoint_settings['include_metamagic_adept'] = False
+                    toggle_fields += f"""-f ＂Toggled Include Metamagic Adept Set To `False`!|The next time you run `{CMD} create`, Sorcery Points from the Metamagic Adept feat will be NOT included in your total Spell Points.＂ """
+
+                else:
+                    spellpoint_settings['include_metamagic_adept'] = True
+                    toggle_fields += f"""-f ＂Toggled Include Metamagic Adept Set To `True`!|The next time you run `{CMD} create`, the 2 additional Sorcery Points from the Metamagic Adept feat will be included in your total Spell Points.＂ """
+
+            if "sorcery" in lowercase_args:
+                if spellpoint_settings['include_sorcery_points'] == True:
+                    spellpoint_settings['include_sorcery_points'] = False
+                    toggle_fields += f"""-f ＂Include Sorcery Points Set To `False`!|The next time you run `{CMD} create`, your Sorcery Points will NOT be included in your total Spell Points.＂ """
+                
+                else:
+                    spellpoint_settings['include_sorcery_points'] = True
+                    toggle_fields += f"""-f ＂Toggled Include Sorcery Points Set To `True`!|The next time you run `{CMD} create`, your Sorcery Points will be included in your total Spell Points. Does not account for magic items, feats, or any extra features. __Ask your DM__ whether to delete your Sorcery Points counter entirely, or whether you're allowed to use this inclusion at all.＂ """
+
+            ch.set_cvar("spellpoint_settings",
+                dump_json(spellpoint_settings)
+            )
+
+            spellpoint_settings = load_json(spellpoint_settings)
+
+        return f"""embed -title ＂{name} Manages Their Spell Point Settings!＂ -desc ＂**Include Metamagic Adept** - `{spellpoint_settings['include_metamagic_adept']}`{N}When `True`, will add 2 extra Spell Points to the total when using `{CMD} create`.{N+N}**Include Sorcery Points** - `{spellpoint_settings['include_sorcery_points']}`{N}When `True`, will add extra Spell Points equal to your Sorcerer level, provided your Sorcerer level is higher than 2.{N+N}**Toggling**{N}Try `{CMD} settings sorcery` or `{CMD} settings metamagic` to toggle the appropriate setting.＂ {toggle_fields} """
+
+    case "help" | _:
+        using(json="c0a7533c-6376-41e9-8c03-18f7742668e5")
+        example = """{"Sorcerer": 1}"""
+        
+        return f"""embed -title ＂{name} needs some help with their Spell Points!＂ -desc ＂**Creating A Spell Points Counter**{N}It's as simple as running `{CMD} create`. Your casting class levels will be used to calculate your new Spell Point total.{N + N}For customization settings, view `{CMD} settings`.{N + N}**Counting Spellcasting Subclasses**{N}`{CMD}` needs to work with `{PREFIX}level` for subclass support. To count spellcasting subclasses, subscribe to [Verbose Character Tools](https://avrae.io/dashboard/workshop/5f7385fe647bb0a416316d1d) on the Alias Workshop and run the command `{PREFIX}level <class> <subclass>`.{N + N}*Example: `{PREFIX}level fighter eldritch`*{N + N}**Optional: Creating Limiters**{N}High-level characters using Spell Points can only cast a limited number of 6th-9th level spells per day. Use `{CMD} create limiters` to automatically create counters to track these. Limiters are optional, and will not be enforced if the counters don't exist.{N + N}Limiters will be automatically expended when casting high-level spells with `{PREFIX}spcast`. If you want to ignore them for some reason, use `-i` or `nolimiters` as an argument with `{PREFIX}spcast` to ignore limiters.{N + N}*Example: `{PREFIX}spcast "wish" nolimiters`*{N + N}**Adding Homebrew Spellcasting Classes**{N}To make sure that homebrewed casting classes are counted (e.g. Keeper, Occultist), you'll need to __create a gvar formatted as a JSON__ which includes the name of the class, and the number of class levels in that class which equate to one full caster level.{N + N}For homebrew subclasses, use the name of the class followed by the name of the subclass in parenthesis. This __requires that the subclass has been set up with `{PREFIX}level`.__  Follow the instructions found in `{PREFIX}level` for help setting up advanced homebrew like this.{N + N}**Here is an Example for Recreating the Alias' Default `spellpoint_classes` Information, Plus a Placeholder Full-Caster Class:**{'`' * 3}json{N + PREFIX}gvar create {json.format_json(spellpoint_classes) + '`' * 3}Avrae will then spit out a **gvar address**. Copy that address, and use it to create a **uvar (recommended)** or **cvar** named `spellpoint_classes`, formatted as a JSON list (e.g `{PREFIX}uvar spellpoint_classes ["344f4ff2-f3f2-47b1-ab3d-9cc03199b9d7"]`). Multiple gvar addresses can be added to that list.{N + N}You can also create an **svar** if you want to __share your homebrew with others__ on your server.{N + N}**Server Overrides**{N}If you are a server owner who would like to override `spellpoint_classes` settings for your server, create an **svar** named `spellpoint_classes_override` in the __same format as one of the **gvars** inside of `spellpoint_classes`.__ When you set an override, no other class levels will be recognized on your server when calculating Spell Points or Limiters.{N + N}**Server Override Example:** {'`'*3}json{N + PREFIX}svar spellpoint_classes_override {example + '`'*3}＂ -footer ＂{FOOTER_STRING}＂ """
+
+
 </drac2>
