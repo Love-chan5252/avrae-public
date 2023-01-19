@@ -5,7 +5,7 @@ CCNAME = 'Spell Points'
 # !spcast
 PREFIX = f"{ctx.prefix}"
 CMD = f"{PREFIX}{ctx.alias}"
-FOOTER_STRING = f"{CMD} | v2.2.0 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = f"{CMD} | v2.2.1 | Lovingly made by @""Love-chan#5252"
 CHARACTER_PIC = image
 
 # Replace blacklisted, wrongly-flagged arguments with unflagged ones.
@@ -100,24 +100,6 @@ spell_level = min(
     )
 )
 
-# Expends high-level limiters if they exist, then displays them.
-ignore_limiters = parsed_args.get("nolimiters",
-    default=False,
-    type_=bool)
-
-parsed_args.ignore("nolimiters")
-
-limiter_field = ""
-
-if not ignore and not ignore_limiters:
-    if ch.cc_exists(limiter := f"{spell_level}th-Level Casts ({CCNAME})"):
-        if ch.get_cc(limiter) > 0:
-            ch.mod_cc(limiter, -1)
-            limiter_field = f"""-f ＂{limiter} (-1)|{ch.cc(limiter).full_str()}＂ """
-        else:
-            using(int_lib='b7c014b7-e267-463c-bc60-8cf9651031fb')
-            err(f"""**LimiterError:** {name} can't cast another spell of that level! You tried to cast {spell.name} at {int_lib.ordinal(spell_level)}-level. No Spell Points were expended. Try using `-i` to ignore all requirements, using `nolimiters` to ignore limiters or taking a long rest to reset Spell Points and limiters.""")
-
 # Ignores arg in order not to trigger extra snippets when args are returne to `!embed`.
 parsed_args.update({"l":f"{spell_level}"})
 
@@ -151,10 +133,7 @@ def cost(default: int):
 
 def get_mod(stat):
     mod = ch.stats.get_mod(stat)
-    if mod > -1:
-        return f"+{mod}"
-    else:
-        return str(mod)
+    return f"+{mod}" if mod > -1 else str(mod)
 
 for i in args[1:]:
     match i.lower():    
@@ -218,6 +197,24 @@ if not ignore and cc < points:
     using(int_lib='b7c014b7-e267-463c-bc60-8cf9651031fb')
     err(f"""{name} doesn't have enough Spell Points to cast {spell.name} like this! {spell.name} is {int_lib.ordinal(spell.level)}-level, and you tried casting it at {int_lib.ordinal(spell_level)}-level. No Spell Points were expended. Try using `-i` to ignore requirements or taking a long rest to reset Spell Points.""")
 
+# Expends high-level limiters if they exist, then displays them.
+ignore_limiters = parsed_args.get("nolimiters",
+    default=False,
+    type_=bool)
+
+parsed_args.ignore("nolimiters")
+
+limiter_field = ""
+
+if not ignore and not ignore_limiters:
+    if ch.cc_exists(limiter := f"{spell_level}th-Level Casts ({CCNAME})"):
+        if ch.get_cc(limiter) > 0:
+            ch.mod_cc(limiter, -1)
+            limiter_field = f"""-f ＂{limiter} (-1)|{ch.cc(limiter).full_str()}＂ """
+        else:
+            using(int_lib='b7c014b7-e267-463c-bc60-8cf9651031fb')
+            err(f"""**LimiterError:** {name} can't cast another spell of that level! You tried to cast {spell.name} at {int_lib.ordinal(spell_level)}-level. No Spell Points were expended. Try using `-i` to ignore all requirements, using `nolimiters` to ignore limiters or taking a long rest to reset Spell Points and limiters.""")
+
 # Expends points, or modifies :points: so the embed shows that 0 were spent.
 if not ignore:
     ch.mod_cc(CCNAME, -points)
@@ -231,7 +228,7 @@ point_field = f""" ＂-f＂ ＂{CCNAME} (-{points})|{ch.cc_str(CCNAME)}＂ """
 # Excludes the first arg (spell name), `nolimiters`, and snippets with the same name as the metamagic inputs.
 using(arg_lib='0a015433-288e-441e-b0ec-1d5b905c9646')
 args = arg_lib.unparse(parsed_args)
-argument_string = " ".join(["＂" + i + "＂" for i in args])
+argument_string = " ".join([f"＂{i}＂" for i in args])
 
 return f"""cast ＂{spell.name}＂ {metamagic_fields} {point_field} {limiter_field} {argument_string} -i"""
 </drac2>
