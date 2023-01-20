@@ -2,7 +2,7 @@
 args = &ARGS&
 N,ZERO_SPACE,TRIPLE_BACK_TICKS = "\n","\u200c","`"+"`"+"`"
 VARNAME = "custom_decks"
-FOOTER_STRING = "!deck | v1.2.2 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = "!deck | v1.2.3 | Lovingly made by @""Love-chan#5252"
 
 c = combat()
 character_pic = image
@@ -72,7 +72,7 @@ if "draw" == args[0]:
     
     card_str = decklib.current_cards_str()
 
-    if len(drawpile) == 0:
+    if len(decklib.drawpile) == 0:
         return f"""embed -title "{name} has no cards left to draw!" -desc "{card_str}" {cardhand_display_fields} -footer "{FOOTER_STRING}" -thumb "{character_pic}" """
 
     draw_err = ""
@@ -82,7 +82,7 @@ if "draw" == args[0]:
         if numbertool.isint(args[1]):
             cards_drawn = max(
                 1, 
-                min(int(args[1]), len(drawpile))
+                min(int(args[1]), len(decklib.drawpile))
                 )
         else:
             if (bad_args := args[1].replace('"', '\\"')):
@@ -232,7 +232,7 @@ if "reset" == args[0]:
     drawpile = decklib.reset_deck()
     
     if autoshuffle_on_reset:
-        decklib.set_drawpile(decklib.shuffle(decklib.drawpile))
+        decklib.set_drawpile(decklib.shuffle(drawpile))
         shuffle_msg = "*Drawpile automatically shuffled!*"
     else: 
         shuffle_msg = f"*Remember to shuffle! (`!deck shuffle`)*{N}*Toggle automatic shuffling-on-reset with `!deck reset automatic`!*"
@@ -312,7 +312,7 @@ if "select" == args[0] or "load" == args[0]:
             ## ^^ sets drawpile for use in decklib.current_cards_str()
 
             if autoshuffle_on_reset:
-                decklib.set_drawpile(decklib.shuffle(decklib.drawpile))
+                decklib.set_drawpile(decklib.shuffle(drawpile))
                 shuffle_msg = "*Drawpile automatically shuffled!*"
             else: 
                 shuffle_msg = f"*Remember to shuffle! (`!deck shuffle`)*{N}*Toggle automatic shuffling-on-reset with `!deck reset automatic`!*"
