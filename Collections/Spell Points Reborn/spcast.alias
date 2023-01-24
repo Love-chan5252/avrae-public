@@ -5,7 +5,7 @@ CCNAME = 'Spell Points'
 # !spcast
 PREFIX = f"{ctx.prefix}"
 CMD = f"{PREFIX}{ctx.alias}"
-FOOTER_STRING = f"{CMD} | v2.2.1 | Lovingly made by @""Love-chan#5252"
+FOOTER_STRING = f"{CMD} | v2.3.0 | Lovingly made by @""Love-chan#5252"
 CHARACTER_PIC = image
 
 # Replace blacklisted, wrongly-flagged arguments with unflagged ones.
@@ -64,10 +64,16 @@ spell = None
 # full name.
 input_ = args[0].lower()
 
+if not input_ in ch.spellbook:
+    for i in character().spellbook.spells:
+        if input_ in i.name.lower():
+            input_ = i.name.lower()
+            break
+
 for i in spells:
     if input_ == i.name.lower():
         spell = i
-        parsed_args.ignore(input_)
+        parsed_args.ignore(args[0])
         break
 
 # Runs second to check for partial matches.
@@ -75,7 +81,7 @@ if spell == None:
     for i in spells:
         if input_ in i.name.lower():
             spell = i
-            parsed_args.ignore(input_)
+            parsed_args.ignore(args[0])
             break
 
 # Error if no match found.
